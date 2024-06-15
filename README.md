@@ -5,8 +5,8 @@ Bienvenue dans **Flashorama**, une application développée en ElectronJS qui vo
 ## Fonctionnalités
 
 - **Accès facile** : Jouez à vos jeux Flash préférés directement depuis l'application.
-- **Interface moderne** : Une interface utilisateur intuitive et agréable.
-- **Support multi-jeux** : Supporte plusieurs jeux Flash tels que Club Penguin et Habbo.
+- **Interface moderne** : Une interface utilisateur intuitive et agréable basé sur "Chromium"
+- **Support multi-jeux** : Supporte plusieurs jeux Flash tels que Club Penguin et Habbo (plus dans le futur).
 - **Connexion sécurisée** : Utilise les serveurs sécurisés de "Heaventy's Projects" pour une expérience de jeu fluide.
 
 ## Utilité de Flashorama
@@ -24,11 +24,15 @@ Ce projet est sous licence MIT. Pour plus de détails, veuillez consulter le fic
 
 ## Remerciements
 
-Un grand merci à "Heaventy's Projects" pour leurs serveurs et leur soutien. Merci également à tous les contributeurs et utilisateurs de Flashorama.
+Un grand merci à "Kazumi_Avali" pour l'hébergement des serveurs de jeux.
+Un grand merci à "LightShoro" pour le développement de l'application.
+Un grand merci à "Mister Nox" pour le logo de l'application.
+Un grand merci à "Heaventy's Projects" pour le support et l'inspiration, c'est eux qui ont eu l'idée de ce projet.
 
 ## Contact
 
-Pour toute question ou suggestion, n'hésitez pas à ouvrir une issue sur GitHub ou à nous contacter à l'adresse email suivante : contact@flashorama.com.
+Pour toute question ou suggestion, n'hésitez pas à ouvrir une issue sur GitHub ou à nous contacter à l'adresse email suivante : 
+support@heaventy-projects.fr
 
 ---
 
