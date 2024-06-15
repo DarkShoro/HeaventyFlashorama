@@ -50,7 +50,7 @@ const createWindow = () => {
         width: 600,
         height: 320,
         frame: false,
-        title: "Flashorama - Heaventy Projects",
+        title: "Flashorama - Heaventy's Projects",
         transparent: true,
         show: false,
         icon: path.join(__dirname, 'assets/icon.png')
@@ -91,7 +91,7 @@ const createWindow = () => {
         event.preventDefault();
 
         // set the title of the window
-        mainWindow.setTitle("Flashorama - Heaventy Projects");
+        mainWindow.setTitle("Flashorama - Heaventy's Projects");
 
         // DO NOT TOUCH MY TITLE >:(
     });
