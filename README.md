@@ -24,10 +24,10 @@ Ce projet est sous licence MIT. Pour plus de détails, veuillez consulter le fic
 
 ## Remerciements
 
-Un grand merci à "Kazumi_Avali" pour l'hébergement des serveurs de jeux.
-Un grand merci à "LightShoro" pour le développement de l'application.
-Un grand merci à "Mister Nox" pour le logo de l'application.
-Un grand merci à "Heaventy's Projects" pour le support et l'inspiration, c'est eux qui ont eu l'idée de ce projet.
+- Un grand merci à "Kazumi_Avali" pour l'hébergement des serveurs de jeux.
+- Un grand merci à "LightShoro" pour le développement de l'application.
+- Un grand merci à "Mister Nox" pour le logo de l'application.
+- Un grand merci à "Heaventy's Projects" pour le support et l'inspiration, c'est eux qui ont eu l'idée de ce projet.
 
 ## Contact
 
