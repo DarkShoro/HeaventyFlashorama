@@ -1,18 +1,19 @@
-name: Build NewCP-App
+name: Build Flashorama-App
 
 # Controls when the action will run. 
 on:
-  # Triggers the workflow on push for production branch
+  # Triggers the workflow on draft creation for the development branch
   push:
     branches: 
-       - production
+       - development
+    types: [draft]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    name: Build NewCP-App
+    name: Build Flashorama-App
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -23,15 +24,15 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: '16.x'
 
       - name: Install dependencies
         run: yarn
 
-      - name: Install flatpak
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Install flatpak and dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get install flatpak -y
           sudo apt-get install flatpak-builder -y
@@ -40,20 +41,20 @@ jobs:
           sudo flatpak install flathub org.freedesktop.Platform/x86_64/22.08 org.freedesktop.Sdk/x86_64/22.08 org.electronjs.Electron2.BaseApp/x86_64/22.08 -y
           git config --global --add protocol.file.allow always
 
-      - name: Make and Publish (Ubuntu)
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Publish (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
         run: yarn run publish
         env:
           GITHUB_TOKEN: ${{ secrets.BUILD_TOKEN }}
 
-      - name: Make and Publish (WINDOWS)
-        if: startsWith(matrix.os, 'windows')
+      - name: Publish (Windows)
+        if: matrix.os == 'windows-latest'
         run: yarn run publish-windows
         env:
           GITHUB_TOKEN: ${{ secrets.BUILD_TOKEN }}
         
-      - name: Make and Publish (MAC)
-        if: startsWith(matrix.os, 'macos')
+      - name: Publish (macOS)
+        if: matrix.os == 'macos-latest'
         run: yarn run publish-mac
         env:
           GITHUB_TOKEN: ${{ secrets.BUILD_TOKEN }}
