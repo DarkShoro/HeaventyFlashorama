@@ -1,14 +1,34 @@
 const RPC = require('discord-rpc');
-const rpcClient = new RPC.Client({ transport: 'ipc' });
-const APPLICATION_ID = '793878460157788220';
+const rpcClient = new RPC.Client({
+    transport: 'ipc'
+});
+const APPLICATION_ID = '1251595332161110026';
 RPC.register(APPLICATION_ID);
 
+let wasInitialized = false;
+let startTimestamp;
+
 function onRpcReady() {
+    if (wasInitialized) {
+        return;
+    }
+    wasInitialized = true;
+    startTimestamp = Date.now();
     rpcClient.setActivity({
-        state: "Waddling",
-        details: "New Club Penguin",
-        startTimestamp: Date.now(),
-        largeImageKey: "ncpapp",
+        state: "Sur le lanceur Flashorama",
+        details: "Flashorama - Heaventy Projects",
+        startTimestamp: startTimestamp,
+        largeImageKey: "flashoramaicon",
+        instance: true,
+    });
+}
+
+function updatePresence(state, details, largeImageKey) {
+    rpcClient.setActivity({
+        state: state,
+        details: details,
+        startTimestamp: startTimestamp,
+        largeImageKey: largeImageKey,
         instance: true,
     });
 }
@@ -20,4 +40,7 @@ function initDiscordRichPresence() {
     }).catch(console.error);
 }
 
-module.exports = { initDiscordRichPresence }
+module.exports = {
+    initDiscordRichPresence,
+    updatePresence
+}

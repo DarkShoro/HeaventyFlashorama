@@ -21,9 +21,10 @@ const ALLOWED_ORIGINS = [
     "https://heaventy-projects.fr",
     "https://cpas3media.heaventy-projects.fr",
     "https://cpas2media.heaventy-projects.fr",
-    "https://newclubpenguin.heaventy-projects.fr",
+    "https://clubpenguin.heaventy-projects.fr",
     "https://heabbo.heaventy-projects.fr",
     "https://flashorama.heaventy-projects.fr",
+    "https://lightshoro.fr",
 ];
 
 const pluginPaths = {
@@ -49,6 +50,7 @@ const createWindow = () => {
         width: 600,
         height: 320,
         frame: false,
+        title: "Flashorama - Heaventy Projects",
         transparent: true,
         show: false,
         icon: path.join(__dirname, 'assets/icon.png')
@@ -69,11 +71,13 @@ const createWindow = () => {
         autoHideMenuBar: true,
         useContentSize: true,
         show: false,
+        title: "Flashorama - Heaventy Projects",
         webPreferences: {
             plugins: true,
             session: ses, // Reference the session here
         },
         icon: path.join(__dirname, 'assets/icon.png')
+
     });
 
     mainWindow.webContents.on("did-finish-load", () => {
@@ -94,6 +98,34 @@ const createWindow = () => {
             }
             dialog.showErrorBox("Non autorisé", "Vous ne pouvez pas naviguer vers cette page car elle réside en dehors du domaine autorisé.\n\n Lien bloqué: " + urlString);
         }
+
+        let domain = new URL(urlString).hostname;
+
+        switch (domain) {
+            case "newclubpenguin.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS3) - Heaventy Projects", "cpnewicon");
+                break;
+            case "clubpenguin.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS2) - Heaventy Projects", "cpoldicon");
+                break;
+            case "heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le site Heaventy Projects", "Heaventy Projects", "win");
+                break;
+            case "heabbo.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le site Heabbo", "Heabbo - Heaventy Projects", "heabboicon");
+                break;
+            case "flashorama.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le lanceur Flashorama", "Flashorama - Heaventy Projects", "flashoramaicon");
+                break;
+            case "cpas3media.heaventy-projects.fr":
+            case "cpas2media.heaventy-projects.fr":
+            case "oldbbo.heaventy-projects.fr":
+                break;
+            default:
+                discord_integration.updatePresence("En dehors du site", "Hors du site - Heaventy Projects", "win");
+                break;
+        }
+
     });
 
     app.on('before-quit', (e) => {
