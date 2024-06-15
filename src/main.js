@@ -71,13 +71,12 @@ const createWindow = () => {
         autoHideMenuBar: true,
         useContentSize: true,
         show: false,
-        title: "Flashorama - Heaventy Projects",
         webPreferences: {
             plugins: true,
             session: ses, // Reference the session here
         },
-        icon: path.join(__dirname, 'assets/icon.png')
-
+        icon: path.join(__dirname, 'assets/icon.png'),
+        title: "Flashorama - Heaventy Projects",
     });
 
     mainWindow.webContents.on("did-finish-load", () => {
@@ -86,6 +85,15 @@ const createWindow = () => {
             mainWindow.show();
         }
         discord_integration.initDiscordRichPresence();
+    });
+
+    mainWindow.webContents.on('page-title-updated', (event) => {
+        event.preventDefault();
+
+        // set the title of the window
+        mainWindow.setTitle("Flashorama - Heaventy Projects");
+
+        // DO NOT TOUCH MY TITLE >:(
     });
 
     mainWindow.webContents.on("will-navigate", (event, urlString) => {
