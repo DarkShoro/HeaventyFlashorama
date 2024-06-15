@@ -1,4 +1,4 @@
-# Flashorama
+![Flashorama Logo](./src/assets/flashorama_full_logo.png)
 
 Bienvenue dans **Flashorama**, une application développée en ElectronJS qui vous permet de jouer à des jeux Flash classiques tels que Club Penguin et Habbo depuis les serveurs de "Heaventy's Projects". Ce projet vise à raviver la nostalgie des jeux Flash en leur offrant une nouvelle vie grâce à une interface moderne et facile à utiliser.
 
