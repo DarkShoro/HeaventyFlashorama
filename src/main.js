@@ -13,7 +13,7 @@ if (require("electron-squirrel-startup")) app.quit();
 
 // Check for updates except for macOS
 if (process.platform != "darwin") require("update-electron-app")({
-    repo: "DarkShoro/NewCP-App-Build"
+    repo: "DarkShoro/HeaventyFlashorama"
 });
 
 const ALLOWED_ORIGINS = [
