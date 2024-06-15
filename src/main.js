@@ -25,6 +25,7 @@ const ALLOWED_ORIGINS = [
     "https://heabbo.heaventy-projects.fr",
     "https://flashorama.heaventy-projects.fr",
     "https://lightshoro.fr",
+    "https://misternox.net",
 ];
 
 const pluginPaths = {
