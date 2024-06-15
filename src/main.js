@@ -41,6 +41,8 @@ app.commandLine.appendSwitch("ppapi-flash-path", pluginName);
 app.commandLine.appendSwitch("ppapi-flash-version", "31.0.0.122");
 app.commandLine.appendSwitch("ignore-certificate-errors");
 
+var launcherVersion = app.getVersion();
+
 let ses;
 let mainWindow;
 
@@ -118,7 +120,7 @@ const createWindow = () => {
         if (new URL(urlString).hostname === "flashorama.heaventy-projects.fr") {
             if (urlString.includes("old=true")) return;
             event.preventDefault();
-            mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true");
+            mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
         }
 
         let domain = new URL(urlString).hostname;
@@ -160,14 +162,14 @@ const createWindow = () => {
         setTimeout(() => {
             if (nextUrl) {
                 mainWindow.loadURL(nextUrl);
-                mainWindow.setSize(1124, 800);
+                mainWindow.setSize(1280, 720);
                 resolve();
             }
-            mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true");
+            mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
             // set main window size
-            mainWindow.setSize(1124, 800);
+            mainWindow.setSize(1280, 720);
             resolve();
-        }, 5000)
+        }, 2300)
     );
 };
 
