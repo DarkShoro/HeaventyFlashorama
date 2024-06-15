@@ -1,21 +1,35 @@
-# About
+# Flashorama
 
-NewCP-App is an electron based client for running New Club Penguin. It comes with a builtin flash player, and uses a version of Electron from before flash support was dropped. 
+Bienvenue dans **Flashorama**, une application développée en ElectronJS qui vous permet de jouer à des jeux Flash classiques tels que Club Penguin et Habbo depuis les serveurs de "Heaventy's Projects". Ce projet vise à raviver la nostalgie des jeux Flash en leur offrant une nouvelle vie grâce à une interface moderne et facile à utiliser.
 
-# Contributing
+## Fonctionnalités
 
-All contributions are welcome. People who discover bugs with the client may open new issues (please keep in mind that you should only open a new issue if it is a bug with the client, NOT a bug with the game), and people may open pull requests to add new features or fix bugs. Do not expect to be paid for contributing, however if your contribution was meaningful, you may be credited. Active contributors may be recruited as a developer for NewCP, but this is not guaranteed. 
+- **Accès facile** : Jouez à vos jeux Flash préférés directement depuis l'application.
+- **Interface moderne** : Une interface utilisateur intuitive et agréable.
+- **Support multi-jeux** : Supporte plusieurs jeux Flash tels que Club Penguin et Habbo.
+- **Connexion sécurisée** : Utilise les serveurs sécurisés de "Heaventy's Projects" pour une expérience de jeu fluide.
 
-**NOTE: The following instructions are for people who want to contribute. If you are here to play NewCP, please use our prebuilt binaries from [here](https://github.com/New-Club-Penguin/NewCP-App-Build/releases)**.
+## Utilité de Flashorama
 
-### Setup
+Avec l'arrêt officiel du support de Flash par les navigateurs modernes, de nombreux jeux classiques sont devenus inaccessibles pour la plupart des utilisateurs. Flashorama est utile car :
 
-- Please make sure you have [nodejs](https://nodejs.org/en/download/) and [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable) installed. 
-- Clone this repository.
-- Install node dependencies using the command `yarn install`.
+1. **Préservation des jeux** : Elle permet de préserver des jeux Flash emblématiques qui ont marqué une génération de joueurs.
+2. **Accessibilité** : Les utilisateurs peuvent accéder facilement à ces jeux sans avoir besoin de configurations complexes ou de solutions de contournement pour activer Flash sur leurs navigateurs.
+3. **Sécurité** : En utilisant des serveurs sécurisés et une application dédiée, les joueurs peuvent profiter de leurs jeux préférés sans les risques de sécurité associés aux anciennes versions de Flash.
+4. **Nostalgie** : Pour de nombreux utilisateurs, Flashorama offre une opportunité de revisiter des souvenirs d'enfance et de partager ces expériences avec une nouvelle génération.
 
-### Running
-To run the NewCP client, use the following command:
-```
-yarn start
-```
+## Licence
+
+Ce projet est sous licence MIT. Pour plus de détails, veuillez consulter le fichier [LICENSE](LICENSE).
+
+## Remerciements
+
+Un grand merci à "Heaventy's Projects" pour leurs serveurs et leur soutien. Merci également à tous les contributeurs et utilisateurs de Flashorama.
+
+## Contact
+
+Pour toute question ou suggestion, n'hésitez pas à ouvrir une issue sur GitHub ou à nous contacter à l'adresse email suivante : contact@flashorama.com.
+
+---
+
+Profitez de vos jeux Flash avec Flashorama et plongez dans la nostalgie !
