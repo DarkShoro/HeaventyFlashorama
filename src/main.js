@@ -79,6 +79,12 @@ const createWindow = () => {
         title: "Flashorama - Heaventy Projects",
     });
 
+    var nextUrl = null;
+
+    if (process.argv[1] && process.argv[1].startsWith('heav://')) {
+        nextUrl = process.argv[1];
+    }
+
     mainWindow.webContents.on("did-finish-load", () => {
         if (splashWindow) {
             splashWindow.close();
@@ -152,6 +158,11 @@ const createWindow = () => {
 
     new Promise((resolve) =>
         setTimeout(() => {
+            if (nextUrl) {
+                mainWindow.loadURL(nextUrl);
+                mainWindow.setSize(1124, 800);
+                resolve();
+            }
             mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true");
             // set main window size
             mainWindow.setSize(1124, 800);
@@ -168,6 +179,20 @@ const launchMain = () => {
         if (mainWindow) {
             if (mainWindow.isMinimized()) mainWindow.restore();
             mainWindow.focus();
+        }
+
+        // Check if the second instance was trying to open a "heav" link
+        const protocolPrefix = 'heav://';
+        const url = _commandLine.find(arg => arg.startsWith(protocolPrefix));
+
+        if (url) {
+            // If it was, load that URL in the main window
+            //replace the protocol prefix with the correct one
+
+            newUrl = url.replace(protocolPrefix, "https://");
+            // this is done to prevent the app from calling itself again
+
+            mainWindow.loadURL(newUrl);
         }
     });
     app.setAsDefaultProtocolClient("heav");
