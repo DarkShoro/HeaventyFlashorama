@@ -7,6 +7,9 @@ const {
 } = require("electron");
 const discord_integration = require('./integrations/discord');
 const path = require("path");
+const fetch = require('node-fetch');
+
+const AbortController = require('abort-controller');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) app.quit();
@@ -46,6 +49,34 @@ var launcherVersion = app.getVersion();
 
 let ses;
 let mainWindow;
+
+const checkWebsiteConnection = (url, timeout = 5000) => {
+    return new Promise((resolve, reject) => {
+        const controller = new AbortController();
+        const signal = controller.signal;
+
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+            reject(new Error('Connection timed out'));
+        }, timeout);
+
+        fetch(url, {
+                signal
+            })
+            .then(response => {
+                clearTimeout(timeoutId);
+                if (response.ok) {
+                    resolve();
+                } else {
+                    reject(new Error('Failed to connect'));
+                }
+            })
+            .catch(err => {
+                clearTimeout(timeoutId);
+                reject(new Error('Failed to connect'));
+            });
+    });
+};
 
 const createWindow = () => {
     // Create the browser window.
@@ -159,19 +190,28 @@ const createWindow = () => {
 
     mainWindow.on("closed", () => (mainWindow = null));
 
-    new Promise((resolve) =>
-        setTimeout(() => {
-            if (nextUrl) {
-                mainWindow.loadURL(nextUrl);
+    if (!nextUrl) {
+        nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion
+    }
+
+    checkWebsiteConnection(nextUrl, 5000)
+        .then(() => {
+            new Promise((resolve) => {
+
+                if (nextUrl) {
+                    mainWindow.loadURL(nextUrl);
+                    mainWindow.setSize(1280, 720);
+                    resolve();
+                }
+                mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
+                // set main window size
                 mainWindow.setSize(1280, 720);
                 resolve();
-            }
-            mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
-            // set main window size
-            mainWindow.setSize(1280, 720);
-            resolve();
-        }, 2300)
-    );
+            });
+        }).catch(() => {
+            dialog.showErrorBox("Erreur de connexion", "Impossible de se connecter au site, veuillez vérifier votre connexion internet.");
+            app.quit();
+        });
 };
 
 const launchMain = () => {
