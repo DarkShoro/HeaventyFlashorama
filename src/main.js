@@ -99,11 +99,19 @@ const createWindow = () => {
             dialog.showErrorBox("Non autorisé", "Vous ne pouvez pas naviguer vers cette page car elle réside en dehors du domaine autorisé.\n\n Lien bloqué: " + urlString);
         }
 
+        // if the site is flashorama, add the ?old=true parameter to the url
+
+        if (new URL(urlString).hostname === "flashorama.heaventy-projects.fr") {
+            if (urlString.includes("old=true")) return;
+            event.preventDefault();
+            mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true");
+        }
+
         let domain = new URL(urlString).hostname;
 
         switch (domain) {
             case "newclubpenguin.heaventy-projects.fr":
-                discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS3) - Heaventy Projects", "cpnewicon");
+                discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS3) - Heaventy Projects", "cpnewiconnotm");
                 break;
             case "clubpenguin.heaventy-projects.fr":
                 discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS2) - Heaventy Projects", "cpoldicon");
