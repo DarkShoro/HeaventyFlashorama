@@ -23,7 +23,7 @@ const ALLOWED_ORIGINS = [
     "https://cpas2media.heaventy-projects.fr",
     "https://newclubpenguin.heaventy-projects.fr",
     "https://heabbo.heaventy-projects.fr",
-    "https://flash.heaventy-projects.fr",
+    "https://flashorama.heaventy-projects.fr",
 ];
 
 const pluginPaths = {
@@ -104,7 +104,7 @@ const createWindow = () => {
 
     new Promise((resolve) =>
         setTimeout(() => {
-            mainWindow.loadURL("https://flash.heaventy-projects.fr?old=true");
+            mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true");
             // set main window size
             mainWindow.setSize(1124, 800);
             resolve();
