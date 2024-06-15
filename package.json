@@ -1,6 +1,6 @@
 {
     "name": "HeaventyFlashorama",
-    "productName": "Heaventy Flashorama",
+    "productName": "Heaventy-Flashorama",
     "version": "1.0.1",
     "description": "Heaventy's Flash Games App",
     "main": "src/main.js",
