@@ -20,7 +20,7 @@
     "config": {
         "forge": {
             "packagerConfig": {
-                "icon": "lib/icons/icon.icns"
+                "icon": "lib/icons/icon"
             },
             "makers": [{
                 "name": "@electron-forge/maker-squirrel",
@@ -28,6 +28,7 @@
                     "name": "heaventyflashorama",
                     "authors": "LightShoro",
                     "loadingGif": "./src/assets/default-splash.gif",
+                    "iconUrl": "https://flashorama.heaventy-projects.fr/assets/app.ico",
                     "setupIcon": "./lib/icons/icon.ico"
                 }
             }, {
