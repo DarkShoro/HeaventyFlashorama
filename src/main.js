@@ -113,6 +113,12 @@ const createWindow = () => {
         title: "Flashorama - Heaventy Projects",
     });
 
+    // force icon on macos 
+
+    if (process.platform === "darwin") {
+        app.dock.setIcon(path.join(__dirname, 'assets/icon.png'));
+    }
+
     var nextUrl = null;
 
     if (process.argv[1] && process.argv[1].startsWith('heav://')) {
