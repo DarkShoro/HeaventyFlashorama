@@ -8,6 +8,7 @@ const {
 const discord_integration = require('./integrations/discord');
 const path = require("path");
 const fetch = require('node-fetch');
+const fs = require('fs');
 
 const AbortController = require('abort-controller');
 
@@ -23,7 +24,8 @@ autoUpdater.setFeedURL({
     provider: "github",
     owner: "DarkShoro",
     repo: "HeaventyFlashorama",
-    private: false
+    private: false,
+    url: `https://api.github.com/repos/DarkShoro/HeaventyFlashorama/releases/latest`
 });
 
 // Prevent Electron from automatically downloading updates
@@ -265,7 +267,11 @@ const launchMain = () => {
     });
     app.setAsDefaultProtocolClient("heav");
 
-    autoUpdater.checkForUpdates()
+    if (fs.existsSync(path.resolve(path.dirname(process.execPath), '..', 'update.exe')) && process.platform !== 'darwin') {
+        autoUpdater.checkForUpdates();
+    } else {
+        console.info("We're not running in a packaged environment, so we won't check for updates.");
+    }
 
     app.whenReady().then(() => {
         createWindow();
