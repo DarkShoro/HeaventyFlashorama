@@ -15,8 +15,15 @@ const AbortController = require('abort-controller');
 if (require("electron-squirrel-startup")) app.quit();
 
 // Check for updates except for macOS
-if (process.platform != "darwin") require("update-electron-app")({
+/*if (process.platform != "darwin") require("update-electron-app")({
     repo: "DarkShoro/HeaventyFlashorama"
+}); */
+
+autoUpdater.setFeedURL({
+    provider: "github",
+    owner: "DarkShoro",
+    repo: "HeaventyFlashorama",
+    private: false
 });
 
 // Prevent Electron from automatically downloading updates
