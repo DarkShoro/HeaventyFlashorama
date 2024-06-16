@@ -19,6 +19,23 @@ if (process.platform != "darwin") require("update-electron-app")({
     repo: "DarkShoro/HeaventyFlashorama"
 });
 
+// Prevent Electron from automatically downloading updates
+autoUpdater.autoDownload = false;
+
+autoUpdater.on('update-available', () => {
+    dialog.showMessageBox({
+        type: 'question',
+        buttons: ['Télécharger', 'Annuler'],
+        defaultId: 0,
+        message: 'Une nouvelle version du lanceur est disponible. Voulez-vous la télécharger ?',
+    }).then(result => {
+        // If the user wants to download the update
+        if (result.response === 0) {
+            autoUpdater.downloadUpdate();
+        }
+    });
+});
+
 const ALLOWED_ORIGINS = [
     "https://newclubpenguin.heaventy-projects.fr",
     "https://heaventy-projects.fr",
@@ -240,6 +257,8 @@ const launchMain = () => {
         }
     });
     app.setAsDefaultProtocolClient("heav");
+
+    autoUpdater.checkForUpdates()
 
     app.whenReady().then(() => {
         createWindow();
