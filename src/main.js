@@ -8,7 +8,6 @@ const {
 const discord_integration = require('./integrations/discord');
 const path = require("path");
 const fetch = require('node-fetch');
-const fs = require('fs');
 
 const AbortController = require('abort-controller');
 
@@ -16,33 +15,8 @@ const AbortController = require('abort-controller');
 if (require("electron-squirrel-startup")) app.quit();
 
 // Check for updates except for macOS
-/*if (process.platform != "darwin") require("update-electron-app")({
+if (process.platform != "darwin") require("update-electron-app")({
     repo: "DarkShoro/HeaventyFlashorama"
-}); */
-
-autoUpdater.setFeedURL({
-    provider: "github",
-    owner: "DarkShoro",
-    repo: "HeaventyFlashorama",
-    private: false,
-    url: `https://api.github.com/repos/DarkShoro/HeaventyFlashorama/releases/latest`
-});
-
-// Prevent Electron from automatically downloading updates
-autoUpdater.autoDownload = false;
-
-autoUpdater.on('update-available', () => {
-    dialog.showMessageBox({
-        type: 'question',
-        buttons: ['Télécharger', 'Annuler'],
-        defaultId: 0,
-        message: 'Une nouvelle version du lanceur est disponible. Voulez-vous la télécharger ?',
-    }).then(result => {
-        // If the user wants to download the update
-        if (result.response === 0) {
-            autoUpdater.downloadUpdate();
-        }
-    });
 });
 
 const ALLOWED_ORIGINS = [
@@ -266,12 +240,6 @@ const launchMain = () => {
         }
     });
     app.setAsDefaultProtocolClient("heav");
-
-    if (fs.existsSync(path.resolve(path.dirname(process.execPath), '..', 'update.exe')) && process.platform !== 'darwin') {
-        autoUpdater.checkForUpdates();
-    } else {
-        console.info("We're not running in a packaged environment, so we won't check for updates.");
-    }
 
     app.whenReady().then(() => {
         createWindow();
