@@ -1,12 +1,7 @@
 name: Build Flashorama-App
 
 # Controls when the action will run.
-on:
-  # Triggers the workflow on draft creation for the development branch
-  push:
-    branches:
-      - development
-    types: [draft]
+on: push
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
