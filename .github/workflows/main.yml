@@ -25,7 +25,7 @@ jobs:
           node-version: '16.x'
 
       - name: Install dependencies
-        run: yarn
+        run: yarn install
 
       - name: Install flatpak and dependencies (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
