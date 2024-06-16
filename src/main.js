@@ -117,6 +117,7 @@ const createWindow = () => {
 
     if (process.platform === "darwin") {
         app.dock.setIcon(path.join(__dirname, 'assets/icon.png'));
+        app.setName("Flashorama");
     }
 
     var nextUrl = null;
