@@ -1,80 +1,38 @@
-name: Build Flashorama-App
+name: Build
 
-# Controls when the action will run.
 on: push
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    name: Build Flashorama-App
+  release:
     runs-on: ${{ matrix.os }}
+
+    permissions:
+      contents: write
+
     strategy:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
 
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v2
+      - name: Check out Git repository
+        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
+      - name: Set up Node
+        uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: 20
+
+      - name: Install Yarn
+        run: npm install -g yarn
+        shell: bash
 
       - name: Install dependencies
         run: yarn install
+        shell: bash
 
-      - name: Install flatpak and dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get install flatpak -y
-          sudo apt-get install flatpak-builder -y
-          sudo apt-get install elfutils -y
-          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          sudo flatpak install flathub org.freedesktop.Platform/x86_64/22.08 org.freedesktop.Sdk/x86_64/22.08 org.electronjs.Electron2.BaseApp/x86_64/22.08 -y
-          git config --global --add protocol.file.allow always
-
-      - name: Build Flashorama
-        run: yarn run build
-
-      - name: Create Release Draft
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Build
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.sha }}
-          release_name: Draft Release
-          draft: true
-          prerelease: false
-
-      - name: Upload Artifact (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v2
-        with:
-          name: Flashorama-linux
-          path: /path/to/linux/artifact   # Replace with the actual path to your Linux artifact
-
-      - name: Upload Artifact (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v2
-        with:
-          name: Flashorama-windows
-          path: /path/to/windows/artifact  # Replace with the actual path to your Windows artifact
-
-      - name: Upload Artifact (macOS)
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v2
-        with:
-          name: Flashorama-macos
-          path: /path/to/macos/artifact    # Replace with the actual path to your macOS artifact
-
-      - name: Attach uploaded artifacts to Release Draft
-        if: steps.create_release.outputs.upload_url != ''
-        run: |
-          curl -X POST ${{ steps.create_release.outputs.upload_url }}/assets?name=Flashorama-linux -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" --header 'Content-Type: application/gzip' --data-binary '@/path/to/linux/artifact'
-          curl -X POST ${{ steps.create_release.outputs.upload_url }}/assets?name=Flashorama-windows -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" --header 'Content-Type: application/gzip' --data-binary '@/path/to/windows/artifact'
-          curl -X POST ${{ steps.create_release.outputs.upload_url }}/assets?name=Flashorama-macos -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" --header 'Content-Type: application/gzip' --data-binary '@/path/to/macos/artifact'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run dist
+        shell: bash
