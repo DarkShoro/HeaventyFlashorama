@@ -24,6 +24,11 @@ jobs:
         with:
           node-version: '16.x'
 
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
       - name: Install macos-alias module
         if: startsWith(matrix.os, 'macos')
         run: npm install -g macos-alias
