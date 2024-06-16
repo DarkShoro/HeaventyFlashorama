@@ -1308,7 +1308,7 @@ discord-rpc@^4.0.1:
     node-fetch "^2.6.1"
     ws "^7.3.1"
   optionalDependencies:
-    register-scheme "github:devsnek/node-register-scheme"
+    register-scheme "git+ssh://git@github.com/devsnek/node-register-scheme.git"
 
 domify@~0.2.0:
   version "0.2.0"
