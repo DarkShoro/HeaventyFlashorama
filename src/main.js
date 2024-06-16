@@ -260,6 +260,5 @@ const launchMain = () => {
             app.quit();
         }
     });
-}
-
+};
 launchMain();
