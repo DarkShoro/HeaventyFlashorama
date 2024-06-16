@@ -3349,7 +3349,7 @@ rechoir@^0.8.0:
   dependencies:
     resolve "^1.20.0"
 
-"register-scheme@github:devsnek/node-register-scheme":
+"register-scheme@git+ssh://git@github.com/devsnek/node-register-scheme.git":
   version "0.0.2"
   resolved "git+ssh://git@github.com/devsnek/node-register-scheme.git#e7cc9a63a1f512565da44cb57316d9fb10750e17"
   dependencies:
