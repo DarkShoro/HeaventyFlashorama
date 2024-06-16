@@ -116,7 +116,7 @@ const createWindow = () => {
     var nextUrl = null;
 
     if (process.argv[1] && process.argv[1].startsWith('heav://')) {
-        nextUrl = process.argv[1];
+        nextUrl = process.argv[1].replace('heav://', 'https://');
     }
 
     mainWindow.webContents.on("did-finish-load", () => {
