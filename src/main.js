@@ -288,4 +288,5 @@ const launchMain = () => {
         }
     });
 };
+
 launchMain();
