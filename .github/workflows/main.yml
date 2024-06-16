@@ -25,7 +25,9 @@ jobs:
           node-version: '16.x'
 
       - name: Install dependencies
-        run: yarn
+        run: |
+          npm install macos-alias
+          yarn
 
       - name: Install flatpak
         if: startsWith(matrix.os, 'ubuntu')
