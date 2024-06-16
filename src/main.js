@@ -116,7 +116,8 @@ const createWindow = () => {
     var nextUrl = null;
 
     if (process.argv[1] && process.argv[1].startsWith('heav://')) {
-        nextUrl = process.argv[1].replace('heav://', 'https://');
+        nextUrl = process.argv[1];
+        nextUrl = nextUrl.replace("heav://", "https://");
     }
 
     mainWindow.webContents.on("did-finish-load", () => {
@@ -190,7 +191,7 @@ const createWindow = () => {
 
     mainWindow.on("closed", () => (mainWindow = null));
 
-    if (!nextUrl) {
+    if (nextUrl === null) {
         nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion
     }
 
@@ -202,6 +203,7 @@ const createWindow = () => {
                     mainWindow.loadURL(nextUrl);
                     mainWindow.setSize(1280, 720);
                     resolve();
+                    return;
                 }
                 mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
                 // set main window size
@@ -234,7 +236,6 @@ const launchMain = () => {
 
             newUrl = url.replace(protocolPrefix, "https://");
             // this is done to prevent the app from calling itself again
-
             mainWindow.loadURL(newUrl);
         }
     });
