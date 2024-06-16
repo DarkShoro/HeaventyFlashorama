@@ -22,11 +22,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.x
-
       - name: Install Dependencies
         run: npm ci
         shell: bash
