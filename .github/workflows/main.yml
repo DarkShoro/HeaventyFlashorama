@@ -31,7 +31,9 @@ jobs:
 
       - name: Install macos-alias module
         if: startsWith(matrix.os, 'macos')
-        run: npm install -g macos-alias
+        run: |
+          pip install distutils
+          npm install -g macos-alias
 
       - name: Install dependencies
         run: yarn
