@@ -122,9 +122,9 @@ const createWindow = () => {
 
     var nextUrl = null;
 
-    if (process.argv[1] && process.argv[1].startsWith('heav://')) {
+    if (process.argv[1] && process.argv[1].startsWith('flashorama://')) {
         nextUrl = process.argv[1];
-        nextUrl = nextUrl.replace("heav://", "https://");
+        nextUrl = nextUrl.replace("flashorama://", "https://");
     }
 
     mainWindow.webContents.on("did-finish-load", () => {
@@ -234,7 +234,7 @@ const launchMain = () => {
         }
 
         // Check if the second instance was trying to open a "heav" link
-        const protocolPrefix = 'heav://';
+        const protocolPrefix = 'flashorama://';
         const url = _commandLine.find(arg => arg.startsWith(protocolPrefix));
 
         if (url) {
@@ -246,7 +246,7 @@ const launchMain = () => {
             mainWindow.loadURL(newUrl);
         }
     });
-    app.setAsDefaultProtocolClient("heav");
+    app.setAsDefaultProtocolClient("flashorama");
 
     app.whenReady().then(() => {
         createWindow();
