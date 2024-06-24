@@ -57,6 +57,10 @@
                 "config": {
                     "genericName": "Flashorama",
                     "productName": "Flashorama",
+                    "id": "fr.lightshoro.heaventy.Flashorama",
+                    "options": [{
+                        "id": "fr.lightshoro.heaventy.Flashorama"
+                    }],
                     "categories": [
                         "Game"
                     ],
