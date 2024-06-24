@@ -8,8 +8,19 @@ const {
 const discord_integration = require('./integrations/discord');
 const path = require("path");
 const fetch = require('node-fetch');
+const yargs = require('yargs');
 
 const AbortController = require('abort-controller');
+
+const options = yargs
+    .usage("Usage: -game <name>")
+    .option("game", {
+        alias: "game",
+        describe: "Game string (cpas3, cpas2, heabbo)",
+        type: "string",
+        demandOption: false
+    })
+    .argv;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) app.quit();
@@ -255,16 +266,16 @@ const launchMain = () => {
 
     // verify launch argument "game" to launch the game directly
 
-    let game = process.argv.find(arg => arg.startsWith("game="));
+    var game = options.game;
 
     switch (game) {
-        case "game=cpas3":
+        case "cpas3":
             nextUrlMain = "https://newclubpenguin.heaventy-projects.fr";
             break;
-        case "game=cpas2":
+        case "cpas2":
             nextUrlMain = "https://clubpenguin.heaventy-projects.fr";
             break;
-        case "game=heabbo":
+        case "heabbo":
             nextUrlMain = "https://heabbo.heaventy-projects.fr";
             break;
     }
