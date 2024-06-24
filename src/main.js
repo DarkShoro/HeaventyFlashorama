@@ -49,6 +49,7 @@ var launcherVersion = app.getVersion();
 
 let ses;
 let mainWindow;
+var nextUrlMain = null;
 
 const checkWebsiteConnection = (url, timeout = 5000) => {
     return new Promise((resolve, reject) => {
@@ -121,6 +122,10 @@ const createWindow = () => {
     }
 
     var nextUrl = null;
+
+    if (nextUrlMain) {
+        nextUrl = nextUrlMain;
+    }
 
     if (process.argv[1] && process.argv[1].startsWith('flashorama://')) {
         nextUrl = process.argv[1];
@@ -247,6 +252,22 @@ const launchMain = () => {
         }
     });
     app.setAsDefaultProtocolClient("flashorama");
+
+    // verify launch argument "game" to launch the game directly
+
+    let game = process.argv.find(arg => arg.startsWith("game="));
+
+    switch (game) {
+        case "game=cpas3":
+            nextUrlMain = "https://newclubpenguin.heaventy-projects.fr";
+            break;
+        case "game=cpas2":
+            nextUrlMain = "https://clubpenguin.heaventy-projects.fr";
+            break;
+        case "game=heabbo":
+            nextUrlMain = "https://heabbo.heaventy-projects.fr";
+            break;
+    }
 
     app.whenReady().then(() => {
         createWindow();
