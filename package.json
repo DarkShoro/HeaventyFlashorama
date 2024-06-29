@@ -44,7 +44,7 @@
             }, {
                 "name": "@electron-forge/maker-dmg",
                 "config": {
-                    "background": "./lib/icons/macosbg.png",
+                    "background": "./lib/icons/macos_bg.png",
                     "format": "ULFO"
                 }
             }, {
@@ -109,7 +109,7 @@
             ]
         },
         "dmg": {
-            "background": "./lib/icons/macosbg.png"
+            "background": "./lib/icons/macos_bg.png"
         },
         "win": {
             "icon": "./lib/icons/icon.png"
