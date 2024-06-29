@@ -109,6 +109,7 @@ const createWindow = () => {
     splashWindow.on("closed", () => (splashWindow = null));
     splashWindow.webContents.on("did-finish-load", () => {
         splashWindow.show();
+        splashWindow.focus();
     });
 
     ses = session.fromPartition("persist:main"); // Ensure the session is initialized here
