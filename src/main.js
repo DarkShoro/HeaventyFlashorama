@@ -210,7 +210,10 @@ const createWindow = () => {
     });
 
     app.on('before-quit', (e) => {
-        mainWindow.destroy();
+        // if not on macos, destroy main window
+        if (process.platform !== "darwin") {
+            mainWindow.destroy();
+        }
     });
 
     mainWindow.on("closed", () => (mainWindow = null));
