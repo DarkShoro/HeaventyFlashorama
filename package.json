@@ -44,6 +44,7 @@
             }, {
                 "name": "@electron-forge/maker-dmg",
                 "config": {
+                    "background": "./lib/icons/macos_bg.png",
                     "format": "ULFO"
                 }
             }, {
@@ -102,7 +103,13 @@
         "copyright": "Copyright © 2024 ${author}",
         "mac": {
             "icon": "./lib/icons/icon.icns",
-            "category": "lib.games.lightshoro"
+            "category": "public.app-category.games",
+            "target": [
+                "dmg"
+            ]
+        },
+        "dmg": {
+            "background": "./lib/icons/macos_bg.png"
         },
         "win": {
             "icon": "./lib/icons/icon.png"
