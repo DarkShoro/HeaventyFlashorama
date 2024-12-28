@@ -1,7 +1,7 @@
 {
     "name": "Flashorama",
     "productName": "Flashorama",
-    "version": "1.1.4",
+    "version": "1.1.5",
     "description": "Flashorama",
     "main": "src/main.js",
     "scripts": {
@@ -32,7 +32,7 @@
                 "config": {
                     "name": "heaventyflashorama",
                     "authors": "LightShoro",
-                    "loadingGif": "./src/assets/default-splash.gif",
+                    "loadingGif": "./lib/default-splash.gif",
                     "iconUrl": "https://flashorama.heaventy-projects.fr/assets/app.ico",
                     "setupIcon": "./lib/icons/icon.ico"
                 }

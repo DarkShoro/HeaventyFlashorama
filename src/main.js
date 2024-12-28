@@ -26,9 +26,15 @@ const options = yargs
 if (require("electron-squirrel-startup")) app.quit();
 
 // Check for updates except for macOS
-if (process.platform != "darwin") require("update-electron-app")({
-    repo: "DarkShoro/HeaventyFlashorama"
-});
+try {
+    if (process.platform != "darwin") {
+        require("update-electron-app")({
+            repo: "DarkShoro/HeaventyFlashorama"
+        });
+    }
+} catch (error) {
+    console.error("Failed to update the Electron app:", error);
+}
 
 const ALLOWED_ORIGINS = [
     "https://newclubpenguin.heaventy-projects.fr",
@@ -38,6 +44,7 @@ const ALLOWED_ORIGINS = [
     "https://clubpenguin.heaventy-projects.fr",
     "https://heabbo.heaventy-projects.fr",
     "https://flashorama.heaventy-projects.fr",
+    "https://midbbo.heaventy-projects.fr",
     "https://lightshoro.fr",
     "https://misternox.net",
 ];
