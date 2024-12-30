@@ -25,6 +25,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install dependencies for Flatpak
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: sudo apt-get update && sudo apt-get install -y flatpak-builder binutils
+
       - name: Build the Electron app
         run: npm run make
 
