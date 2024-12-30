@@ -36,27 +36,30 @@ jobs:
           else
             npm run make;
           fi
+        
+      - name: Check output directory
+        run: ls -R out/make/
 
       - name: Upload artifacts
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v3
         with:
           name: linux-build
-          path: out/make/*/x64/*
+          path: out/make/**
 
       - name: Upload artifacts
         if: ${{ matrix.os == 'windows-latest' }}
         uses: actions/upload-artifact@v3
         with:
           name: windows-build
-          path: out/make/*/x64/*
+          path: out/make/**
 
       - name: Upload artifacts
         if: ${{ matrix.os == 'macos-13' }}
         uses: actions/upload-artifact@v3
         with:
           name: macos-build
-          path: out/make/*/x64/*
+          path: out/make/**
 
   release:
     runs-on: ubuntu-latest
