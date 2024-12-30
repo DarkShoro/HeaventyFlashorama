@@ -32,7 +32,7 @@ jobs:
       - name: Build the Electron app
         run: |
           if [[ "${{ matrix.os }}" == "ubuntu-latest" || "${{ matrix.os }}" == "macos-latest" ]]; then
-            npm run make -- --openssl_fips='';
+            npm run make --openssl_fips='';
           else
             npm run make;
           fi
