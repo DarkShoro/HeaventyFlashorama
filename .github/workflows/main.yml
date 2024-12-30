@@ -2,8 +2,8 @@ name: Build and Release Electron App
 
 on:
   push:
-    branches:
-      - development
+    tags:
+      - "v*"
 
 jobs:
   build:
@@ -22,15 +22,20 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Install dependencies for Flatpak
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: sudo apt-get update && sudo apt-get install -y flatpak-builder binutils
 
+      - name: Install dependencies
+        run: npm install
+
       - name: Build the Electron app
-        run: npm run make
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" || "${{ matrix.os }}" == "macos-latest" ]]; then
+            npm run make -- --openssl_fips='';
+          else
+            npm run make;
+          fi
 
       - name: Upload artifacts
         if: ${{ matrix.os == 'ubuntu-latest' }}
