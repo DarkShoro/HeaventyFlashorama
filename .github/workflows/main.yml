@@ -22,6 +22,13 @@ jobs:
         with:
           node-version: 18
 
+      - name: Install Flatpak SDK and Runtime
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo;
+          flatpak install -y flathub org.freedesktop.Sdk//21.08 org.freedesktop.Platform//21.08;
+
+
       - name: Install dependencies for Flatpak
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: sudo apt-get update && sudo apt-get install -y flatpak-builder binutils
@@ -42,21 +49,21 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: linux-build
-          path: out/make/*/x64/*-*
+          path: out/make/*/x64/*
 
       - name: Upload artifacts
         if: ${{ matrix.os == 'windows-latest' }}
         uses: actions/upload-artifact@v3
         with:
           name: windows-build
-          path: out/make/*/x64/*-*
+          path: out/make/*/x64/*
 
       - name: Upload artifacts
         if: ${{ matrix.os == 'macos-13' }}
         uses: actions/upload-artifact@v3
         with:
           name: macos-build
-          path: out/make/*/x64/*-*
+          path: out/make/*/x64/*
 
   release:
     runs-on: ubuntu-latest
