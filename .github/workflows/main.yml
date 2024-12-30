@@ -52,7 +52,7 @@ jobs:
           path: out/make/*/x64/*-*
 
       - name: Upload artifacts
-        if: ${{ matrix.os == 'macos-latest' }}
+        if: ${{ matrix.os == 'macos-13' }}
         uses: actions/upload-artifact@v3
         with:
           name: macos-build
