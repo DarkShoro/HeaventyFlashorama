@@ -37,16 +37,25 @@ try {
 }
 
 const ALLOWED_ORIGINS = [
-    "https://newclubpenguin.heaventy-projects.fr",
     "https://heaventy-projects.fr",
-    "https://cpas3media.heaventy-projects.fr",
-    "https://cpas2media.heaventy-projects.fr",
-    "https://clubpenguin.heaventy-projects.fr",
-    "https://heabbo.heaventy-projects.fr",
     "https://flashorama.heaventy-projects.fr",
+    "https://clubpenguin.heaventy-projects.fr",
+    "https://cpas2media.heaventy-projects.fr",
+    "https://newclubpenguin.heaventy-projects.fr",
+    "https://cpas3media.heaventy-projects.fr",
+    "https://oldbbo.heaventy-projects.fr",
     "https://midbbo.heaventy-projects.fr",
+    "https://heabbo.heaventy-projects.fr",
     "https://lightshoro.fr",
     "https://misternox.net",
+    "http://flashorama.intra",
+    "http://clubpenguin.flashorama.intra",
+    "http://cpmedia00.flashorama.intra",
+    "http://newclubpenguin.flashorama.intra",
+    "http://cpmedia01.flashorama.intra",
+    "http://oldbbo.flashorama.intra",
+    "http://midbbo.flashorama.intra",
+    "http://heabbo.flashorama.intra",
 ];
 
 const pluginPaths = {
