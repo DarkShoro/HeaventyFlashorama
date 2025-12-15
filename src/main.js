@@ -16,11 +16,17 @@ const options = yargs
     .usage("Usage: -game <name>")
     .option("game", {
         alias: "game",
-        describe: "Game string (cpas3, cpas2, heabbo, midbbo, oldbbo)",
+        describe: "Game string (cpas3, cpas2, heabbo, midbbo, oldbbo, cpas3-intra, cpas2-intra, heabbo-intra, midbbo-intra, oldbbo-intra)",
         type: "string",
         demandOption: false
     })
     .argv;
+
+const os = require("os");
+const localIPs = Object.values(os.networkInterfaces())
+    .flat()
+    .filter(i => i.family === "IPv4" && !i.internal)
+    .map(i => i.address);
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) app.quit();
@@ -163,6 +169,11 @@ const createWindow = () => {
         nextUrl = nextUrl.replace("flashorama://", "https://");
     }
 
+    if (process.argv[1] && process.argv[1].startsWith('flashorama-intra://')) {
+        nextUrl = process.argv[1];
+        nextUrl = nextUrl.replace("flashorama-intra://", "http://");
+    }
+
     mainWindow.webContents.on("did-finish-load", () => {
         if (splashWindow) {
             splashWindow.close();
@@ -183,7 +194,7 @@ const createWindow = () => {
     mainWindow.webContents.on("will-navigate", (event, urlString) => {
         if (!ALLOWED_ORIGINS.includes(new URL(urlString).origin)) {
             event.preventDefault();
-            if (urlString.includes("oldbbo.heaventy-projects.fr")) || urlString.includes("oldbbo.heaventy-projects.intra") {
+            if (urlString.includes("oldbbo.heaventy-projects.fr")) || (urlString.includes("oldbbo.heaventy-projects.intra")) {
                 // make an error box to tell the user that the oldbbo is not supported
                 dialog.showErrorBox("Non supporté", "Oldbbo n'est pas supporté par l'application, veuillez utiliser un navigateur supportant Shockwave Flash.");
                 return;
@@ -197,6 +208,12 @@ const createWindow = () => {
             if (urlString.includes("old=true")) return;
             event.preventDefault();
             mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
+        }
+
+        if (new URL(urlString).hostname === "flashorama.intra") {
+            if (urlString.includes("old=true")) return;
+            event.preventDefault();
+            mainWindow.loadURL("http://flashorama.intra?old=true&launcher=" + launcherVersion);
         }
 
         let domain = new URL(urlString).hostname;
@@ -232,6 +249,9 @@ const createWindow = () => {
             case "flashorama.heaventy-projects.fr":
                 discord_integration.updatePresence("Sur le lanceur Flashorama", "Flashorama - Heaventy Projects", "flashoramaicon");
                 break;
+            case "flashorama.intra":
+                discord_integration.updatePresence("Sur le lanceur Flashorama", "Flashorama - Heaventy Projects", "flashoramaicon");
+                break;
             case "cpas3media.heaventy-projects.fr":
             case "cpas2media.heaventy-projects.fr":
             default:
@@ -251,7 +271,11 @@ const createWindow = () => {
     mainWindow.on("closed", () => (mainWindow = null));
 
     if (nextUrl === null) {
-        nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion
+        if (localIPs.some(ip => /^192\.168\.(48|96)\./.test(ip))) {
+            nextUrl = "http://flashorama.intra?old=true&launcher=" + launcherVersion
+        } else {
+            nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion
+        }
     }
 
     checkWebsiteConnection(nextUrl, 5000)
@@ -264,7 +288,11 @@ const createWindow = () => {
                     resolve();
                     return;
                 }
-                mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
+                if (localIPs.some(ip => /^192\.168\.(48|96)\./.test(ip))) {
+                    mainWindow.loadURL("http://flashorama.intra?old=true&launcher=");
+                } else {
+                    mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
+                }
                 // set main window size
                 mainWindow.setSize(1280, 720);
                 resolve();
@@ -313,6 +341,27 @@ const launchMain = () => {
             break;
         case "heabbo":
             nextUrlMain = "https://heabbo.heaventy-projects.fr";
+            break;
+        case "midbbo":
+            nextUrlMain = "https://midbbo.heaventy-projects.fr";
+            break;
+        case "oldbbo":
+            nextUrlMain = "https://oldbbo.heaventy-projects.fr";
+            break;
+        case "cpas3-intra":
+            nextUrlMain = "http://newclubpenguin.flashorama.intra";
+            break;
+        case "cpas2-intra":
+            nextUrlMain = "http://clubpenguin.flashorama.intra";
+            break;
+        case "heabbo-intra":
+            nextUrlMain = "http://heabbo.flashorama.intra";
+            break;
+        case "midbbo-intra":
+            nextUrlMain = "http://midbbo.flashorama.intra";
+            break;
+        case "oldbbo-intra":
+            nextUrlMain = "http://oldbbo.flashorama.intra";
             break;
     }
 
