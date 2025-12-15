@@ -16,7 +16,7 @@ const options = yargs
     .usage("Usage: -game <name>")
     .option("game", {
         alias: "game",
-        describe: "Game string (cpas3, cpas2, heabbo)",
+        describe: "Game string (cpas3, cpas2, heabbo, midbbo, oldbbo)",
         type: "string",
         demandOption: false
     })
@@ -38,6 +38,8 @@ try {
 
 const ALLOWED_ORIGINS = [
     "https://heaventy-projects.fr",
+    "https://lightshoro.fr",
+    "https://misternox.net",
     "https://flashorama.heaventy-projects.fr",
     "https://clubpenguin.heaventy-projects.fr",
     "https://cpas2media.heaventy-projects.fr",
@@ -46,8 +48,9 @@ const ALLOWED_ORIGINS = [
     "https://oldbbo.heaventy-projects.fr",
     "https://midbbo.heaventy-projects.fr",
     "https://heabbo.heaventy-projects.fr",
-    "https://lightshoro.fr",
-    "https://misternox.net",
+
+    // Intranet domains for development & testing
+    "http://heaventy-projects.intra",
     "http://flashorama.intra",
     "http://clubpenguin.flashorama.intra",
     "http://cpmedia00.flashorama.intra",
@@ -180,7 +183,7 @@ const createWindow = () => {
     mainWindow.webContents.on("will-navigate", (event, urlString) => {
         if (!ALLOWED_ORIGINS.includes(new URL(urlString).origin)) {
             event.preventDefault();
-            if (urlString.includes("oldbbo.heaventy-projects.fr")) {
+            if (urlString.includes("oldbbo.heaventy-projects.fr")) || urlString.includes("oldbbo.heaventy-projects.intra") {
                 // make an error box to tell the user that the oldbbo is not supported
                 dialog.showErrorBox("Non supporté", "Oldbbo n'est pas supporté par l'application, veuillez utiliser un navigateur supportant Shockwave Flash.");
                 return;
@@ -199,25 +202,38 @@ const createWindow = () => {
         let domain = new URL(urlString).hostname;
 
         switch (domain) {
+            case "heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le site Heaventy Projects", "Heaventy Projects", "win");
+                break;
+            case "heaventy-projects.intra":
+                discord_integration.updatePresence("Sur le site Heaventy Projects", "Heaventy Projects", "win");
+                break;
+            case "lightshoro.fr":
+                discord_integration.updatePresence("Sur le site Lightshoro", "Heaventy Projects", "win");
+                break;
+            case "misternox.net":
+                discord_integration.updatePresence("Sur le site MisterNow", "Heaventy Projects", "win");
+                break;
             case "newclubpenguin.heaventy-projects.fr":
                 discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS3) - Heaventy Projects", "cpnewiconnotm");
                 break;
             case "clubpenguin.heaventy-projects.fr":
                 discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS2) - Heaventy Projects", "cpoldicon");
                 break;
-            case "heaventy-projects.fr":
-                discord_integration.updatePresence("Sur le site Heaventy Projects", "Heaventy Projects", "win");
-                break;
             case "heabbo.heaventy-projects.fr":
                 discord_integration.updatePresence("Sur le site Heabbo", "Heabbo - Heaventy Projects", "heabboicon");
+                break;
+            case "midbbo.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le site Midbbo", "Flashorama - Heaventy Projects", "midbboicon");
+                break;
+            case "oldbbo.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le site Oldbbo", "Flashorama - Heaventy Projects", "oldbboicon");
                 break;
             case "flashorama.heaventy-projects.fr":
                 discord_integration.updatePresence("Sur le lanceur Flashorama", "Flashorama - Heaventy Projects", "flashoramaicon");
                 break;
             case "cpas3media.heaventy-projects.fr":
             case "cpas2media.heaventy-projects.fr":
-            case "oldbbo.heaventy-projects.fr":
-                break;
             default:
                 discord_integration.updatePresence("En dehors du site", "Hors du site - Heaventy Projects", "win");
                 break;

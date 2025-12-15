@@ -1,7 +1,7 @@
 {
     "name": "Flashorama",
     "productName": "Flashorama",
-    "version": "1.1.6",
+    "version": "1.2.0",
     "description": "Flashorama",
     "main": "src/main.js",
     "scripts": {
@@ -116,7 +116,7 @@
         ],
         "appId": "fr.lightshoro.heaventy.flashorama",
         "productName": "Heaventy's Projects : Flashorama",
-        "copyright": "Copyright © 2024 ${author}",
+        "copyright": "Copyright © 2026 ${author}",
         "mac": {
             "icon": "./lib/icons/icon.icns",
             "category": "public.app-category.games",
