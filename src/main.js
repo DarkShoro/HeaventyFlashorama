@@ -1,420 +1,400 @@
-var paramplus = "";
+const {
+    app,
+    BrowserWindow,
+    autoUpdater,
+    dialog,
+    session
+} = require("electron");
+const discord_integration = require('./integrations/discord');
+const path = require("path");
+const fetch = require('node-fetch');
+const yargs = require('yargs');
 
-// if the navigator is in french, add "fr" to the url
-if (navigator.language === "fr") {
-    paramplus = "/fr/";
+const AbortController = require('abort-controller');
+
+const options = yargs
+    .usage("Usage: -game <name>")
+    .option("game", {
+        alias: "game",
+        describe: "Game string (cpas3, cpas2, heabbo, midbbo, oldbbo, cpas3-intra, cpas2-intra, heabbo-intra, midbbo-intra, oldbbo-intra)",
+        type: "string",
+        demandOption: false
+    })
+    .argv;
+
+const os = require("os");
+const localIPs = Object.values(os.networkInterfaces())
+    .flat()
+    .filter(i => i.family === "IPv4" && !i.internal)
+    .map(i => i.address);
+
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+if (require("electron-squirrel-startup")) app.quit();
+
+// Check for updates except for macOS
+try {
+    if (process.platform != "darwin") {
+        require("update-electron-app")({
+            repo: "DarkShoro/HeaventyFlashorama"
+        });
+    }
+} catch (error) {
+    console.error("Failed to update the Electron app:", error);
 }
 
-$("#goto-newcp").click(function(e) {
-    var el = $(this);
-    if ($(this).hasClass("disabled")) {
-        return;
-    }
-    if (urlParams.get('old') === 'true') {
-        window.location.href = "http://newclubpenguin.flashorama.intra" + paramplus;
-        return;
-    }
-    // toastR to inform the user the site called Flashorama app
+const ALLOWED_ORIGINS = [
+    "https://heaventy-projects.fr",
+    "https://lightshoro.fr",
+    "https://misternox.net",
+    "https://flashorama.heaventy-projects.fr",
+    "https://clubpenguin.heaventy-projects.fr",
+    "https://cpas2media.heaventy-projects.fr",
+    "https://newclubpenguin.heaventy-projects.fr",
+    "https://cpas3media.heaventy-projects.fr",
+    "https://oldbbo.heaventy-projects.fr",
+    "https://midbbo.heaventy-projects.fr",
+    "https://heabbo.heaventy-projects.fr",
 
-    toastr["info"]("Le site a demandé à ouvrir le jeu dans Flashorama. Si vous avez Flashorama installé, le jeu va s'ouvrir dans l'application.<br><br> Le site ouvrira la page dans 12 secondes si vous n'avez pas Flashorama.", "Ouverture du jeu dans Flashorama");
+    // Intranet domains for development & testing
+    "http://heaventy-projects.intra",
+    "http://flashorama.intra",
+    "http://clubpenguin.flashorama.intra",
+    "http://cpmedia00.flashorama.intra",
+    "http://newclubpenguin.flashorama.intra",
+    "http://cpmedia01.flashorama.intra",
+    "http://oldbbo.flashorama.intra",
+    "http://midbbo.flashorama.intra",
+    "http://heabbo.flashorama.intra",
+];
 
-    window.protocolCheck("flashorama://newclubpenguin.flashorama.intra" + paramplus,
-        function() {
-            toastr["error"]("Flashorama n'est pas installé sur votre appareil. Vous pouvez le télécharger en cliquant sur le bouton ci-dessous.", "Flashorama n'est pas installé");
-            setTimeout(function() {
-                window.location = "http://newclubpenguin.flashorama.intra" + paramplus;
-            }, 1000);
-        },
-        function() {
-            toastr["success"]("Flashorama à bien ouvert le jeu dans l'application.", "Jeu ouvert dans Flashorama");
-        });
-    e.preventDefault ? e.preventDefault() : e.returnValue = false;
-});
+const pluginPaths = {
+    win32: path.join(path.dirname(__dirname), "lib/pepflashplayer.dll"),
+    darwin: path.join(path.dirname(__dirname), "lib/PepperFlashPlayer.plugin"),
+    linux: path.join(path.dirname(__dirname), "lib/libpepflashplayer.so"),
+};
 
-$("#goto-oldcp").click(function(e) {
-    var el = $(this);
-    if ($(this).hasClass("disabled")) {
-        return;
-    }
-    if (urlParams.get('old') === 'true') {
-        window.location.href = "http://clubpenguin.flashorama.intra" + paramplus;
-        return;
-    }
+if (process.platform === "linux") app.commandLine.appendSwitch("no-sandbox");
+const pluginName = pluginPaths[process.platform];
+console.log("pluginName", pluginName);
 
-    toastr["info"]("Le site a demandé à ouvrir le jeu dans Flashorama. Si vous avez Flashorama installé, le jeu va s'ouvrir dans l'application.<br><br> Le site ouvrira la page dans 12 secondes si vous n'avez pas Flashorama.", "Ouverture du jeu dans Flashorama");
+app.commandLine.appendSwitch("ppapi-flash-path", pluginName);
+app.commandLine.appendSwitch("ppapi-flash-version", "31.0.0.122");
+app.commandLine.appendSwitch("ignore-certificate-errors");
 
-    window.protocolCheck("flashorama://clubpenguin.flashorama.intra" + paramplus,
-        function() {
-            toastr["error"]("Flashorama n'est pas installé sur votre appareil. Vous pouvez le télécharger en cliquant sur le bouton ci-dessous.", "Flashorama n'est pas installé");
-            setTimeout(function() {
-                window.location = "http://clubpenguin.flashorama.intra" + paramplus;
-            }, 1000);
-        },
-        function() {
-            toastr["success"]("Flashorama à bien ouvert le jeu dans l'application.", "Jeu ouvert dans Flashorama");
-        });
-    e.preventDefault ? e.preventDefault() : e.returnValue = false;
-});
+var launcherVersion = app.getVersion();
 
-$("#goto-heabbo").click(function(e) {
-    var el = $(this);
-    if ($(this).hasClass("disabled")) {
-        return;
-    }
-    if (urlParams.get('old') === 'true') {
-        window.location.href = "http://heabbo.flashorama.intra";
-        return;
-    }
+let ses;
+let mainWindow;
+var nextUrlMain = null;
 
-    toastr["info"]("Le site a demandé à ouvrir le jeu dans Flashorama. Si vous avez Flashorama installé, le jeu va s'ouvrir dans l'application.<br><br> Le site ouvrira la page dans 12 secondes si vous n'avez pas Flashorama.", "Ouverture du jeu dans Flashorama");
+const checkWebsiteConnection = (url, timeout = 5000) => {
+    return new Promise((resolve, reject) => {
+        const controller = new AbortController();
+        const signal = controller.signal;
 
-    window.protocolCheck("flashorama://heabbo.flashorama.intra",
-        function() {
-            toastr["error"]("Flashorama n'est pas installé sur votre appareil. Vous pouvez le télécharger en cliquant sur le bouton ci-dessous.", "Flashorama n'est pas installé");
-            setTimeout(function() {
-                window.location = "http://heabbo.flashorama.intra";
-            }, 1000);
-        },
-        function() {
-            toastr["success"]("Flashorama à bien ouvert le jeu dans l'application.", "Jeu ouvert dans Flashorama");
-        });
-    e.preventDefault ? e.preventDefault() : e.returnValue = false;
-});
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+            reject(new Error('Connection timed out'));
+        }, timeout);
 
-$("#goto-midbbo").click(function(e) {
-    var el = $(this);
-    if ($(this).hasClass("disabled")) {
-        return;
-    }
-    if (urlParams.get('old') === 'true') {
-        window.location.href = "http://midbbo.flashorama.intra/";
-        return;
-    }
-
-    toastr["info"]("Le site a demandé à ouvrir le jeu dans Flashorama. Si vous avez Flashorama installé, le jeu va s'ouvrir dans l'application.<br><br> Le site ouvrira la page dans 12 secondes si vous n'avez pas Flashorama.", "Ouverture du jeu dans Flashorama");
-
-    window.protocolCheck("flashorama://midbbo.flashorama.intra",
-        function() {
-            toastr["error"]("Flashorama n'est pas installé sur votre appareil. Vous pouvez le télécharger en cliquant sur le bouton ci-dessous.", "Flashorama n'est pas installé");
-            setTimeout(function() {
-                window.location = "http://midbbo.flashorama.intra/";
-            }, 1000);
-        },
-        function() {
-            toastr["success"]("Flashorama à bien ouvert le jeu dans l'application.", "Jeu ouvert dans Flashorama");
-        });
-    e.preventDefault ? e.preventDefault() : e.returnValue = false;
-});
-
-document.getElementById('goto-showo').addEventListener('click', () => {
-    if (urlParams.get('old') === 'true') {
-        // open the webpage as a popup
-        window.open(`https://lightshoro.fr`, "_blank", "width=1200,height=700");
-        return;
-    }
-    window.location.href = `https://lightshoro.fr`;
-});
-
-document.getElementById('goto-nowox').addEventListener('click', () => {
-    if (urlParams.get('old') === 'true') {
-        // open the webpage as a popup
-        window.open(`https://misternox.net`, "_blank", "width=1200,height=700");
-        return;
-    }
-    window.location.href = `https://misternox.net`;
-});
-
-document.getElementById('goto-win').addEventListener('click', () => {
-    if (urlParams.get('old') === 'true') {
-        // open the webpage as a popup
-        window.open(`https://heaventy-projects.fr`, "_blank", "width=1200,height=700");
-        return;
-    }
-    window.location.href = `https://heaventy-projects.fr`;
-});
-
-// if a "get" parameter is set and is equal to "old=true", disable the old heabbo button
-
-var onLauncher = false;
-
-String.prototype.escape = function() {
-    var tagsToReplace = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;'
-    };
-    return this.replace(/[&<>]/g, function(tag) {
-        return tagsToReplace[tag] || tag;
+        fetch(url, {
+                signal
+            })
+            .then(response => {
+                clearTimeout(timeoutId);
+                if (response.ok) {
+                    resolve();
+                } else {
+                    reject(new Error('Failed to connect'));
+                }
+            })
+            .catch(err => {
+                clearTimeout(timeoutId);
+                reject(new Error('Failed to connect'));
+            });
     });
 };
 
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('old') === 'true') {
-    $("#goto-oldheabbo").addClass("disabled border-gray-500");
-    $("#goto-oldheabbo").removeClass("border-white");
-    $("#goto-oldheabbo").addClass("old-logo");
-    $("#download-launcher-div").addClass("hidden");
-    $("#open-in-app").addClass("hidden");
-    $("#info").removeClass("hidden");
-    $("#goto-credits").removeClass("hidden");
-    onLauncher = true;
-}
-if (urlParams.get('launcher')) {
-    var launcherVersion = urlParams.get('launcher').escape();
-    $("#footer").append(` | <span class="versionLnc">Flashorama v-${launcherVersion}</span>`);
-}
-
-document.getElementById('goto-oldheabbo').addEventListener('click', () => {
-    if (urlParams.get('old') === 'true') {
-        return;
-    }
-    window.location.href = `http://oldbbo.flashorama.intra`;
-});
-
-// Add a tooltip to the buttons
-document.querySelectorAll('[tooltip]').forEach((element) => {
-    console.log(element);
-    $(element).hover(function() {
-        const tooltip = document.createElement('div');
-        tooltip.classList.add('absolute', 'bg-black', 'text-white', 'p-2', 'rounded', 'text-sm', 'opacity-90');
-        tooltip.textContent = element.getAttribute('tooltip');
-        if ($(element).hasClass("disabled")) {
-            if (element.getAttribute('data-mode') == "maintenance") {
-                tooltip.textContent = "Ce jeu est actuellement en maintenance.";
-            } else {
-                tooltip.textContent = "Ce jeu est actuellement indisponible sur ce Lanceur.";
-            }
-        }
-        element.appendChild(tooltip);
-    }, function() {
-        element.querySelector('div').remove();
+const createWindow = () => {
+    // Create the browser window.
+    let splashWindow = new BrowserWindow({
+        width: 600,
+        height: 320,
+        frame: false,
+        title: "Flashorama - Heaventy's Projects",
+        transparent: true,
+        show: false,
+        icon: path.join(__dirname, 'assets/icon.png')
     });
-});
 
-var repo = "DarkShoro" + "/HeaventyFlashorama";
+    splashWindow.setResizable(false);
+    splashWindow.loadURL(
+        "file://" + path.join(path.dirname(__dirname), "src/index.html"),
+    );
+    splashWindow.on("closed", () => (splashWindow = null));
+    splashWindow.webContents.on("did-finish-load", () => {
+        splashWindow.show();
+        splashWindow.focus();
+    });
 
-// Get the latest release from the repository
+    ses = session.fromPartition("persist:main"); // Ensure the session is initialized here
 
+    mainWindow = new BrowserWindow({
+        autoHideMenuBar: true,
+        useContentSize: true,
+        show: false,
+        webPreferences: {
+            plugins: true,
+            session: ses, // Reference the session here
+        },
+        icon: path.join(__dirname, 'assets/icon.png'),
+        title: "Flashorama - Heaventy Projects",
+    });
 
-function detectOS() {
-    let userAgent = window.navigator.userAgent,
-        platform = window.navigator.platform,
-        macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
-        windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'],
-        iosPlatforms = ['iPhone', 'iPad', 'iPod'],
-        os = null;
+    // force icon on macos 
 
-    if (macosPlatforms.indexOf(platform) !== -1) {
-        os = 'Mac OS';
-    } else if (iosPlatforms.indexOf(platform) !== -1) {
-        os = 'iOS';
-    } else if (windowsPlatforms.indexOf(platform) !== -1) {
-        os = 'Windows';
-    } else if (/Android/.test(userAgent)) {
-        os = 'Android';
-    } else if (!os && /Linux/.test(platform)) {
-        os = 'Linux';
+    if (process.platform === "darwin") {
+        app.dock.setIcon(path.join(__dirname, 'assets/icon.png'));
+        app.setName("Flashorama");
     }
 
-    return os;
-}
+    var nextUrl = null;
 
+    if (nextUrlMain) {
+        nextUrl = nextUrlMain;
+    }
 
-$.getJSON("https://api.github.com/repos/" + repo + "/releases/latest").done(function(release) {
-    // Get the version number
-    console.log(release);
-    var version = release.tag_name;
+    if (process.argv[1] && process.argv[1].startsWith('flashorama://')) {
+        nextUrl = process.argv[1];
+        nextUrl = nextUrl.replace("flashorama://", "https://");
+    }
 
-    // DEPRECATED
+    if (process.argv[1] && process.argv[1].startsWith('flashorama-intra://')) {
+        nextUrl = process.argv[1];
+        nextUrl = nextUrl.replace("flashorama-intra://", "http://");
+    }
 
-    /*$("#download-launcher").attr("location", release.assets[0].browser_download_url);
-    $("#download-launcher").text("Télécharger le lanceur (" + version + ")");
-    $("#download-launcher-ctn").removeClass("hidden");*/
-
-    // NEW METHOD
-
-    var os = detectOS();
-
-    var Exe
-    var Dmg
-    var RPM
-    var DEB
-    var Flatpak
-
-    release.assets.forEach(asset => {
-        if (asset.name.includes(".exe")) {
-            Exe = asset.browser_download_url
-        } else if (asset.name.includes(".dmg")) {
-            Dmg = asset.browser_download_url
-        } else if (asset.name.includes(".rpm")) {
-            RPM = asset.browser_download_url
-        } else if (asset.name.includes(".deb")) {
-            DEB = asset.browser_download_url
-        } else if (asset.name.includes(".flatpak")) {
-            Flatpak = asset.browser_download_url
+    mainWindow.webContents.on("did-finish-load", () => {
+        if (splashWindow) {
+            splashWindow.close();
+            mainWindow.show();
         }
+        discord_integration.initDiscordRichPresence();
+    });
+
+    mainWindow.webContents.on('page-title-updated', (event) => {
+        event.preventDefault();
+
+        // set the title of the window
+        mainWindow.setTitle("Flashorama - Heaventy's Projects");
+
+        // DO NOT TOUCH MY TITLE >:(
+    });
+
+    mainWindow.webContents.on("will-navigate", (event, urlString) => {
+        if (!ALLOWED_ORIGINS.includes(new URL(urlString).origin)) {
+            event.preventDefault();
+
+            if (
+                urlString.includes("oldbbo.heaventy-projects.fr") ||
+                urlString.includes("oldbbo.heaventy-projects.intra")
+            ) {
+                dialog.showErrorBox(
+                    "Non supporté",
+                    "Oldbbo n'est pas supporté par l'application, veuillez utiliser un navigateur supportant Shockwave Flash."
+                );
+                return;
+            }
+
+            dialog.showErrorBox(
+                "Non autorisé",
+                "Vous ne pouvez pas naviguer vers cette page car elle réside en dehors du domaine autorisé.\n\nLien bloqué: " + urlString
+            );
+        }
+
+        // if the site is flashorama, add the ?old=true parameter to the url
+
+        if (new URL(urlString).hostname === "flashorama.heaventy-projects.fr") {
+            if (urlString.includes("old=true")) return;
+            event.preventDefault();
+            mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
+        }
+
+        if (new URL(urlString).hostname === "flashorama.intra") {
+            if (urlString.includes("old=true")) return;
+            event.preventDefault();
+            mainWindow.loadURL("http://flashorama.intra?old=true&launcher=" + launcherVersion);
+        }
+
+        let domain = new URL(urlString).hostname;
+
+        switch (domain) {
+            case "heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le site Heaventy Projects", "Heaventy Projects", "win");
+                break;
+            case "heaventy-projects.intra":
+                discord_integration.updatePresence("Sur le site Heaventy Projects", "Heaventy Projects", "win");
+                break;
+            case "lightshoro.fr":
+                discord_integration.updatePresence("Sur le site Lightshoro", "Heaventy Projects", "win");
+                break;
+            case "misternox.net":
+                discord_integration.updatePresence("Sur le site MisterNow", "Heaventy Projects", "win");
+                break;
+            case "newclubpenguin.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS3) - Heaventy Projects", "cpnewiconnotm");
+                break;
+            case "clubpenguin.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS2) - Heaventy Projects", "cpoldicon");
+                break;
+            case "heabbo.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le site Heabbo", "Heabbo - Heaventy Projects", "heabboicon");
+                break;
+            case "midbbo.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le site Midbbo", "Flashorama - Heaventy Projects", "midbboicon");
+                break;
+            case "oldbbo.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le site Oldbbo", "Flashorama - Heaventy Projects", "oldbboicon");
+                break;
+            case "flashorama.heaventy-projects.fr":
+                discord_integration.updatePresence("Sur le lanceur Flashorama", "Flashorama - Heaventy Projects", "flashoramaicon");
+                break;
+            case "flashorama.intra":
+                discord_integration.updatePresence("Sur le lanceur Flashorama", "Flashorama - Heaventy Projects", "flashoramaicon");
+                break;
+            case "cpas3media.heaventy-projects.fr":
+            case "cpas2media.heaventy-projects.fr":
+            default:
+                discord_integration.updatePresence("En dehors du site", "Hors du site - Heaventy Projects", "win");
+                break;
+        }
+
+    });
+
+    app.on('before-quit', (e) => {
+        // if not on macos, destroy main window
+        if (process.platform !== "darwin") {
+            mainWindow.destroy();
+        }
+    });
+
+    mainWindow.on("closed", () => (mainWindow = null));
+
+    if (nextUrl === null) {
+        if (localIPs.some(ip => /^192\.168\.(48|96)\./.test(ip))) {
+            nextUrl = "http://flashorama.intra?old=true&launcher=" + launcherVersion
+        } else {
+            nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion
+        }
+    }
+
+    checkWebsiteConnection(nextUrl, 5000)
+        .then(() => {
+            new Promise((resolve) => {
+
+                if (nextUrl) {
+                    mainWindow.loadURL(nextUrl);
+                    mainWindow.setSize(1280, 720);
+                    resolve();
+                    return;
+                }
+                if (localIPs.some(ip => /^192\.168\.(48|96)\./.test(ip))) {
+                    mainWindow.loadURL("http://flashorama.intra?old=true&launcher=");
+                } else {
+                    mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
+                }
+                // set main window size
+                mainWindow.setSize(1280, 720);
+                resolve();
+            });
+        }).catch(() => {
+            dialog.showErrorBox("Erreur de connexion", "Impossible de se connecter au site, veuillez vérifier votre connexion internet.");
+            app.quit();
+        });
+};
+
+const launchMain = () => {
+    // Disallow multiple clients running
+    if (!app.requestSingleInstanceLock()) return app.quit();
+    app.on("second-instance", (_event, _commandLine, _workingDirectory) => {
+        // Someone tried to run a second instance, we should focus our window.
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.focus();
+        }
+
+        // Check if the second instance was trying to open a "heav" link
+        const protocolPrefix = 'flashorama://';
+        const url = _commandLine.find(arg => arg.startsWith(protocolPrefix));
+
+        if (url) {
+            // If it was, load that URL in the main window
+            //replace the protocol prefix with the correct one
+
+            newUrl = url.replace(protocolPrefix, "https://");
+            // this is done to prevent the app from calling itself again
+            mainWindow.loadURL(newUrl);
+        }
+    });
+    app.setAsDefaultProtocolClient("flashorama");
+
+    // verify launch argument "game" to launch the game directly
+
+    var game = options.game;
+
+    switch (game) {
+        case "cpas3":
+            nextUrlMain = "https://newclubpenguin.heaventy-projects.fr";
+            break;
+        case "cpas2":
+            nextUrlMain = "https://clubpenguin.heaventy-projects.fr";
+            break;
+        case "heabbo":
+            nextUrlMain = "https://heabbo.heaventy-projects.fr";
+            break;
+        case "midbbo":
+            nextUrlMain = "https://midbbo.heaventy-projects.fr";
+            break;
+        case "oldbbo":
+            nextUrlMain = "https://oldbbo.heaventy-projects.fr";
+            break;
+        case "cpas3-intra":
+            nextUrlMain = "http://newclubpenguin.flashorama.intra";
+            break;
+        case "cpas2-intra":
+            nextUrlMain = "http://clubpenguin.flashorama.intra";
+            break;
+        case "heabbo-intra":
+            nextUrlMain = "http://heabbo.flashorama.intra";
+            break;
+        case "midbbo-intra":
+            nextUrlMain = "http://midbbo.flashorama.intra";
+            break;
+        case "oldbbo-intra":
+            nextUrlMain = "http://oldbbo.flashorama.intra";
+            break;
+    }
+
+    app.whenReady().then(() => {
+        createWindow();
+
+        app.on("activate", () => {
+            // On OS X it's common to re-create a window in the app when the
+            // dock icon is clicked and there are no other windows open.
+            if (BrowserWindow.getAllWindows().length === 0) {
+                createWindow();
+            }
+        });
     })
 
-    switch (os) {
-        case "Windows":
-            $("#download-launcher").attr("location", Exe);
-            $("#download-launcher").text("Télécharger le lanceur pour Windows (" + version + ")");
-            $("#download-launcher-ctn").removeClass("hidden");
-            break;
-        case "Mac OS":
-            $("#download-launcher").attr("location", Dmg);
-            $("#download-launcher").text("Télécharger le lanceur pour Mac OS (" + version + ")");
-            $("#download-launcher-ctn").removeClass("hidden");
-            break;
-        case "Linux":
-            // break the button into multiple buttons, one for each distro
-
-            var Button = document.createElement("button");
-            // bg-opacity-90 border-2 rounded p-4 text-white
-            Button.classList.add("bg-opacity-90", "border-2", "rounded", "p-4", "text-white", "m-2", "download-launcher");
-            Button.textContent = "Télécharger le lanceur pour Linux .RPM (" + version + ")";
-            Button.setAttribute("location", RPM);
-            Button.addEventListener("click", function() {
-                window.location.href = $(this).attr("location");
-            });
-
-            var Button2 = document.createElement("button");
-            Button2.classList.add("bg-opacity-90", "border-2", "rounded", "p-4", "text-white", "m-2", "download-launcher");
-            Button2.textContent = "Télécharger le lanceur pour Linux .DEB (" + version + ")";
-            Button2.setAttribute("location", DEB);
-            Button2.addEventListener("click", function() {
-                window.location.href = $(this).attr("location");
-            });
-
-            var Button3 = document.createElement("button");
-            Button3.classList.add("bg-opacity-90", "border-2", "rounded", "p-4", "text-white", "m-2", "download-launcher");
-            Button3.textContent = "Télécharger le lanceur pour Linux .Flatpak (" + version + ")";
-            Button3.setAttribute("location", Flatpak);
-            Button3.addEventListener("click", function() {
-                window.location.href = $(this).attr("location");
-            });
-
-            $("#download-launcher-ctn").append(Button);
-            $("#download-launcher-ctn").append(Button2);
-            $("#download-launcher-ctn").append(Button3);
-
-            // remove the old button
-            $("#download-launcher").remove();
-
-        default:
-            $("#download-launcher").attr("location", Exe);
-            $("#download-launcher").text("Télécharger le lanceur pour Windows (" + version + ")");
-            $("#download-launcher-ctn").removeClass("hidden");
-            break;
-    }
-
-
-});
-
-$("#download-launcher").click(function() {
-    window.location.href = $(this).attr("location");
-});
-
-// detect if flash player is installed
-
-var hasFlash = false;
-
-try {
-    var fo = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
-    if (fo) {
-        hasFlash = true;
-    }
-} catch (e) {
-    if (navigator.mimeTypes["application/x-shockwave-flash"] != undefined) {
-        hasFlash = true;
-    }
-}
-
-if (!onLauncher) {
-    if (!hasFlash) {
-        $("#flash-warning").removeClass("hidden");
-    } else {
-        $("#flash-success").removeClass("hidden");
-    }
-}
-
-$(document).ready(function() {
-    let hoverTimeout;
-    let currentButton;
-
-    let maintenances = [
-        "goto-heabbo"
-    ];
-
-    // loop through the maintenances and disable the buttons if they are in maintenance
-    maintenances.forEach(function(buttonId) {
-        // Check if the button exists
-        let button = $("#" + buttonId);
-        if (button.length) {
-            // Disable the button and add a tooltip
-            button.addClass("disabled border-gray-500 old-logo");
-            button.attr("data-mode", "maintenance");
+    // Quit when all windows are closed, except on macOS. There, it's common
+    // for applications and their menu bar to stay active until the user quits
+    // explicitly with Cmd + Q.
+    app.on("window-all-closed", () => {
+        if (process.platform !== "darwin") {
+            app.quit();
         }
     });
+};
 
-    $(".game-button").each(function() {
-        // add event hover to the buttons
-        $(this).hover(function() {
-            // Clear the previous timeout
-            clearTimeout(hoverTimeout);
-
-            let button = $(this);
-
-            // Set a new timeout for the hover event
-            hoverTimeout = setTimeout(function() {
-                if ($(".game-button:hover").length === 0) {
-                    return;
-                }
-
-                if (!button.attr("backgroundvideo")) {
-                    return;
-                }
-
-                if (!button.hasClass("disabled")) {
-                    $("#background-video").attr("src", "/assets/" + button.attr("backgroundvideo") + ".mp4");
-
-                    // wait for the video to load
-                    $("#background-video")[0].onloadeddata = function() {
-                        if ($(".game-button:hover").length > 0 && currentButton === button) {
-                            $("#background-video").fadeIn();
-                            $("#background-video-container").fadeIn();
-                        }
-                    }
-                }
-
-                currentButton = button;
-
-            }, 400);
-        }, function() {
-            // Clear the hover timeout when mouse leaves
-            clearTimeout(hoverTimeout);
-
-            $("#background-video").fadeOut();
-            $("#background-video-container").fadeOut();
-        });
-    });
-});
-
-
-// a loop fading out the video if no game-button is hovered
-setInterval(function() {
-    if ($(".game-button:hover").length === 0) {
-        $("#background-video").fadeOut();
-        $("#background-video-container").fadeOut();
-    }
-}, 100);
-
-$("#goto-credits").click(function() {
-    // popup the credits window
-    if (urlParams.get('old') === 'true') {
-        window.open("/credits.html?old=true", "_blank", "width=1200,height=700");
-        return;
-    } else {
-        window.location.href = "/credits.html";
-    }
-});
+launchMain();
