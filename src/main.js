@@ -9,6 +9,8 @@ const discord_integration = require('./integrations/discord');
 const path = require("path");
 const fetch = require('node-fetch');
 const yargs = require('yargs');
+const ejs = require('ejs');
+const fs = require('fs');
 
 const AbortController = require('abort-controller');
 
@@ -115,9 +117,18 @@ const checkWebsiteConnection = (url, timeout = 5000) => {
     });
 };
 
-const createWindow = () => {
-    // Create the browser window.
-    let splashWindow = new BrowserWindow({
+const createSplashWindow = (isIntranet = false) => {
+    const templatePath = path.join(__dirname, 'index.ejs');
+    const htmlPath = path.join(__dirname, 'index.html');
+    
+    // Render splash with correct logo
+    const logoFile = isIntranet ? 'flashorama_intra_logo.png' : 'flashorama_full_logo.png';
+    const template = fs.readFileSync(templatePath, 'utf-8');
+    const html = ejs.render(template, { logoFile });
+    fs.writeFileSync(htmlPath, html);
+
+    // Create the splash window
+    const splashWindow = new BrowserWindow({
         width: 600,
         height: 320,
         frame: false,
@@ -128,14 +139,17 @@ const createWindow = () => {
     });
 
     splashWindow.setResizable(false);
-    splashWindow.loadURL(
-        "file://" + path.join(path.dirname(__dirname), "src/index.html"),
-    );
-    splashWindow.on("closed", () => (splashWindow = null));
+    splashWindow.loadURL("file://" + htmlPath);
     splashWindow.webContents.on("did-finish-load", () => {
         splashWindow.show();
         splashWindow.focus();
     });
+
+    return splashWindow;
+};
+
+const createWindow = (isIntranet = false) => {
+    let splashWindow = createSplashWindow(false); // Start with generic logo
 
     ses = session.fromPartition("persist:main"); // Ensure the session is initialized here
 
@@ -174,12 +188,45 @@ const createWindow = () => {
         nextUrl = nextUrl.replace("flashorama-intra://", "http://");
     }
 
+    // Check if we're loading an intranet URL and update splash accordingly
+    const isIntranetUrl = (url) => url && (url.includes('flashorama.intra') || url.includes('.intra'));
+
+    let pageLoadTimeout = null;
+    let hasShownMainWindow = false;
+    let splashStartTime = Date.now();
+    const minSplashDisplayTime = 1500; // Minimum 1.5 seconds
+
     mainWindow.webContents.on("did-finish-load", () => {
-        if (splashWindow) {
-            splashWindow.close();
-            mainWindow.show();
+        if (pageLoadTimeout) clearTimeout(pageLoadTimeout);
+        if (!hasShownMainWindow) {
+            hasShownMainWindow = true;
+            
+            // Calculate remaining time to show splash
+            const elapsedTime = Date.now() - splashStartTime;
+            const remainingTime = Math.max(0, minSplashDisplayTime - elapsedTime);
+            
+            setTimeout(() => {
+                if (splashWindow && !splashWindow.isDestroyed()) {
+                    splashWindow.close();
+                }
+                mainWindow.show();
+                console.log("Main window loaded successfully");
+            }, remainingTime);
         }
         discord_integration.initDiscordRichPresence();
+    });
+
+    mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
+        console.error("Failed to load:", errorCode, errorDescription);
+        if (pageLoadTimeout) clearTimeout(pageLoadTimeout);
+        if (!hasShownMainWindow) {
+            hasShownMainWindow = true;
+            if (splashWindow && !splashWindow.isDestroyed()) {
+                splashWindow.close();
+            }
+            dialog.showErrorBox("Erreur de chargement", "Impossible de charger la page: " + errorDescription);
+            app.quit();
+        }
     });
 
     mainWindow.webContents.on('page-title-updated', (event) => {
@@ -281,10 +328,33 @@ const createWindow = () => {
     mainWindow.on("closed", () => (mainWindow = null));
 
     if (nextUrl === null) {
-        // Check if intranet is available
-        checkWebsiteConnection("http://flashorama.intra", 3000)
-            .then(() => {
-                // Intranet is available, prompt user to choose
+        // Check both internet and intranet availability in parallel
+        const internetUrl = "https://flashorama.heaventy-projects.fr";
+        const intranetUrl = "http://flashorama.intra";
+        
+        Promise.all([
+            checkWebsiteConnection(internetUrl, 5000).then(() => true).catch(() => false),
+            checkWebsiteConnection(intranetUrl, 8000).then(() => true).catch(() => false)
+        ]).then(([internetAvailable, intranetAvailable]) => {
+            // If neither is available, show error and quit
+            if (!internetAvailable && !intranetAvailable) {
+                if (splashWindow && !splashWindow.isDestroyed()) {
+                    splashWindow.close();
+                }
+                dialog.showErrorBox("Erreur de connexion", "Impossible de se connecter aux serveurs Internet et Intranet. Veuillez vérifier votre connexion.");
+                app.quit();
+                return;
+            }
+
+            let chosenIsIntranet = false;
+
+            // If both are available, ask user
+            if (internetAvailable && intranetAvailable) {
+                // Close splash before showing dialog
+                if (splashWindow && !splashWindow.isDestroyed()) {
+                    splashWindow.close();
+                }
+
                 const choice = dialog.showMessageBoxSync(mainWindow, {
                     type: 'question',
                     buttons: ['Internet', 'Intranet'],
@@ -294,37 +364,59 @@ const createWindow = () => {
                     detail: 'Quelle version souhaitez-vous utiliser ?'
                 });
 
-                if (choice === 1) {
-                    // User chose Intranet
-                    nextUrl = "http://flashorama.intra?old=true&launcher=" + launcherVersion;
-                } else {
-                    // User chose Internet
-                    nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion;
-                }
+                chosenIsIntranet = (choice === 1);
 
-                loadMainWindow(nextUrl);
-            })
-            .catch(() => {
-                // Intranet not available, use internet version
+                // Recreate splash with chosen logo
+                splashWindow = createSplashWindow(chosenIsIntranet);
+                splashStartTime = Date.now();
+            } else if (intranetAvailable) {
+                // Only intranet available, use it as fallback
+                chosenIsIntranet = true;
+                // Close and recreate splash with intranet logo
+                if (splashWindow && !splashWindow.isDestroyed()) {
+                    splashWindow.close();
+                }
+                splashWindow = createSplashWindow(true);
+                splashStartTime = Date.now();
+            } else {
+                // Only internet available, use it
+                chosenIsIntranet = false;
+            }
+
+            // Set the URL based on choice
+            if (chosenIsIntranet) {
+                nextUrl = "http://flashorama.intra?old=true&launcher=" + launcherVersion;
+            } else {
                 nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion;
-                loadMainWindow(nextUrl);
-            });
-        return; // Exit early to wait for user choice
+            }
+
+            loadMainWindow(nextUrl);
+        });
+        return; // Exit early to wait for connection checks
     }
 
     // If nextUrl is already set (from command line args or game option), load directly
     loadMainWindow(nextUrl);
 
     function loadMainWindow(url) {
-        checkWebsiteConnection(url, 5000)
-            .then(() => {
-                mainWindow.loadURL(url);
-                mainWindow.setSize(1280, 720);
-            })
-            .catch(() => {
-                dialog.showErrorBox("Erreur de connexion", "Impossible de se connecter au site, veuillez vérifier votre connexion internet.");
-                app.quit();
-            });
+        // Start loading immediately and show window after a timeout regardless
+        mainWindow.loadURL(url);
+        mainWindow.setSize(1600, 900);
+        // Center the window on screen
+        mainWindow.center();
+        
+        // Force show window after timeout (longer for intranet)
+        const pageLoadTimeoutDuration = url.includes('flashorama.intra') ? 10000 : 8000;
+        
+        pageLoadTimeout = setTimeout(() => {
+            if (!hasShownMainWindow) {
+                hasShownMainWindow = true;
+                if (splashWindow && !splashWindow.isDestroyed()) {
+                    splashWindow.close();
+                }
+                mainWindow.show();
+            }
+        }, Math.max(pageLoadTimeoutDuration, minSplashDisplayTime));
     }
 };
 
@@ -391,13 +483,15 @@ const launchMain = () => {
     }
 
     app.whenReady().then(() => {
-        createWindow();
+        // Determine if we should use intranet mode based on command-line args
+        const isIntranetMode = nextUrlMain && nextUrlMain.includes('.intra');
+        createWindow(isIntranetMode);
 
         app.on("activate", () => {
             // On OS X it's common to re-create a window in the app when the
             // dock icon is clicked and there are no other windows open.
             if (BrowserWindow.getAllWindows().length === 0) {
-                createWindow();
+                createWindow(isIntranetMode);
             }
         });
     })

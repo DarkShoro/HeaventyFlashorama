@@ -1,4 +1,7 @@
 out
+# Generated files
+src/index.html
+
 # Logs
 logs
 *.log

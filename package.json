@@ -144,6 +144,7 @@
         "async-dialog": "0.0.1",
         "dialogs": "^2.0.1",
         "discord-rpc": "^4.0.1",
+        "ejs": "^3.1.9",
         "electron-prompt": "^1.6.0",
         "electron-squirrel-startup": "^1.0.0",
         "es5-ext": "<=0.10.53",
