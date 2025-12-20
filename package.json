@@ -61,44 +61,6 @@
                 {
                     "name": "@electron-forge/maker-rpm",
                     "config": {}
-                },
-                {
-                    "name": "@electron-forge/maker-flatpak",
-                    "config": {
-                        "id": "fr.lightshoro.heaventy.Flashorama",
-                        "productName": "Flashorama",
-                        "genericName": "Flashorama",
-                        "description": "Flashorama - Flash Games Launcher",
-                        "categories": [
-                            "Game"
-                        ],
-                        "runtime": "org.freedesktop.Platform",
-                        "runtimeVersion": "22.08",
-                        "sdk": "org.freedesktop.Sdk",
-                        "base": "org.electronjs.Electron2.BaseApp",
-                        "baseVersion": "22.08",
-                        "icon": "./lib/icons/icon.png",
-                        "finishArgs": [
-                            "--socket=x11",
-                            "--socket=pulseaudio",
-                            "--share=ipc",
-                            "--share=network",
-                            "--device=dri",
-                            "--filesystem=xdg-config/flashorama:create"
-                        ],
-                        "modules": [
-                            {
-                                "name": "zypak",
-                                "sources": [
-                                    {
-                                        "type": "git",
-                                        "url": "https://github.com/refi64/zypak",
-                                        "tag": "v2022.04"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
                 }
             ],
             "publishers": [
