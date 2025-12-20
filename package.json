@@ -1,7 +1,7 @@
 {
     "name": "Flashorama",
     "productName": "Flashorama",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "Flashorama",
     "main": "src/main.js",
     "scripts": {
@@ -31,8 +31,8 @@
                 {
                     "name": "@electron-forge/maker-squirrel",
                     "config": {
-                        "name": "flashorama",
-                        "authors": "Heaventy's Projects",
+                        "name": "heaventyflashorama",
+                        "authors": "LightShoro",
                         "loadingGif": "./lib/default-splash.gif",
                         "iconUrl": "https://flashorama.heaventy-projects.fr/assets/app.ico",
                         "setupIcon": "./lib/icons/icon.ico"
@@ -95,10 +95,11 @@
                     "name": "@electron-forge/publisher-github",
                     "config": {
                         "repository": {
-                            "owner": "Heaventy's Projects",
-                            "name": "Flashorama"
+                            "owner": "DarkShoro",
+                            "name": "HeaventyFlashorama"
                         },
-                        "prerelease": true
+                        "prerelease": true,
+                        "draft": true
                     }
                 }
             ]
