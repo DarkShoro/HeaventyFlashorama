@@ -48,7 +48,10 @@
                 {
                     "name": "@electron-forge/maker-dmg",
                     "config": {
-                        "format": "ULFO"
+                        "format": "ULFO",
+                        "background": "./lib/macos_bg.png",
+                        "icon": "./lib/icons/icon.icns",
+                        "overwrite": true
                     }
                 },
                 {
