@@ -11,6 +11,7 @@
         "publish": "electron-forge publish",
         "publish-windows": "electron-forge publish",
         "publish-mac": "electron-forge publish --arch=x64",
+        "publish-mac-arm64": "electron-forge publish --arch=arm64",
         "publish-git": "electron-forge publish",
         "lint": "echo \"No linting configured\"",
         "release": "release-it"
@@ -61,16 +62,26 @@
                 {
                     "name": "@electron-forge/maker-flatpak",
                     "config": {
-                        "genericName": "Flashorama",
-                        "productName": "Flashorama",
                         "id": "fr.lightshoro.heaventy.Flashorama",
-                        "options": [
-                            {
-                                "id": "fr.lightshoro.heaventy.Flashorama"
-                            }
-                        ],
+                        "productName": "Flashorama",
+                        "genericName": "Flashorama",
+                        "description": "Flashorama - Flash Games Launcher",
                         "categories": [
                             "Game"
+                        ],
+                        "runtime": "org.freedesktop.Platform",
+                        "runtimeVersion": "22.08",
+                        "sdk": "org.freedesktop.Sdk",
+                        "base": "org.electronjs.Electron2.BaseApp",
+                        "baseVersion": "22.08",
+                        "icon": "./lib/icons/icon.png",
+                        "finishArgs": [
+                            "--socket=x11",
+                            "--socket=pulseaudio",
+                            "--share=ipc",
+                            "--share=network",
+                            "--device=dri",
+                            "--filesystem=xdg-config/flashorama:create"
                         ],
                         "modules": [
                             {
@@ -83,10 +94,7 @@
                                     }
                                 ]
                             }
-                        ],
-                        "runtimeVersion": "22.08",
-                        "baseVersion": "22.08",
-                        "icon": "./lib/icons/icon.ico"
+                        ]
                     }
                 }
             ],
