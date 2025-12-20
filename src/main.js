@@ -236,10 +236,10 @@ const createWindow = () => {
                 discord_integration.updatePresence("Sur le site Heaventy Projects", "Heaventy Projects", "win");
                 break;
             case "lightshoro.fr":
-                discord_integration.updatePresence("Sur le site Lightshoro", "Heaventy Projects", "win");
+                discord_integration.updatePresence("Sur le site LightShoro", "Heaventy Projects", "win");
                 break;
             case "misternox.net":
-                discord_integration.updatePresence("Sur le site MisterNow", "Heaventy Projects", "win");
+                discord_integration.updatePresence("Sur le site MisterNox", "Heaventy Projects", "win");
                 break;
             case "newclubpenguin.heaventy-projects.fr":
                 discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS3) - Heaventy Projects", "cpnewiconnotm");
@@ -281,36 +281,51 @@ const createWindow = () => {
     mainWindow.on("closed", () => (mainWindow = null));
 
     if (nextUrl === null) {
-        if (localIPs.some(ip => /^192\.168\.(48|96)\./.test(ip))) {
-            nextUrl = "http://flashorama.intra?old=true&launcher=" + launcherVersion
-        } else {
-            nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion
-        }
+        // Check if intranet is available
+        checkWebsiteConnection("http://flashorama.intra", 3000)
+            .then(() => {
+                // Intranet is available, prompt user to choose
+                const choice = dialog.showMessageBoxSync(mainWindow, {
+                    type: 'question',
+                    buttons: ['Internet', 'Intranet'],
+                    defaultId: 1,
+                    title: 'Sélection de la version',
+                    message: 'L\'intranet est disponible',
+                    detail: 'Quelle version souhaitez-vous utiliser ?'
+                });
+
+                if (choice === 1) {
+                    // User chose Intranet
+                    nextUrl = "http://flashorama.intra?old=true&launcher=" + launcherVersion;
+                } else {
+                    // User chose Internet
+                    nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion;
+                }
+
+                loadMainWindow(nextUrl);
+            })
+            .catch(() => {
+                // Intranet not available, use internet version
+                nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion;
+                loadMainWindow(nextUrl);
+            });
+        return; // Exit early to wait for user choice
     }
 
-    checkWebsiteConnection(nextUrl, 5000)
-        .then(() => {
-            new Promise((resolve) => {
+    // If nextUrl is already set (from command line args or game option), load directly
+    loadMainWindow(nextUrl);
 
-                if (nextUrl) {
-                    mainWindow.loadURL(nextUrl);
-                    mainWindow.setSize(1280, 720);
-                    resolve();
-                    return;
-                }
-                if (localIPs.some(ip => /^192\.168\.(48|96)\./.test(ip))) {
-                    mainWindow.loadURL("http://flashorama.intra?old=true&launcher=");
-                } else {
-                    mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
-                }
-                // set main window size
+    function loadMainWindow(url) {
+        checkWebsiteConnection(url, 5000)
+            .then(() => {
+                mainWindow.loadURL(url);
                 mainWindow.setSize(1280, 720);
-                resolve();
+            })
+            .catch(() => {
+                dialog.showErrorBox("Erreur de connexion", "Impossible de se connecter au site, veuillez vérifier votre connexion internet.");
+                app.quit();
             });
-        }).catch(() => {
-            dialog.showErrorBox("Erreur de connexion", "Impossible de se connecter au site, veuillez vérifier votre connexion internet.");
-            app.quit();
-        });
+    }
 };
 
 const launchMain = () => {
