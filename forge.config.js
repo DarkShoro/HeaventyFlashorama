@@ -33,20 +33,20 @@ module.exports = {
         iconSize: 128,
         window: {
           size: {
-            width: 1000,
+            width: 500,
             height: 600
           }
         },
         contents: [
           {
-            x: 254,
-            y: 285,
+            x: 300,
+            y: 335,
             type: "file",
             path: `${process.cwd()}/out/Flashorama-darwin-${os.arch()}/Flashorama.app` 
           },
           {
-            x: 598,
-            y: 285,
+            x: 700,
+            y: 335,
             type: "link",
             path: "/Applications"
           }
