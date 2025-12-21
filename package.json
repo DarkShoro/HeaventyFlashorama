@@ -61,38 +61,6 @@
         {
           "name": "@electron-forge/maker-rpm",
           "config": {}
-        },
-        {
-          "name": "@electron-forge/maker-flatpak",
-          "config": {
-            "id": "fr.lightshoro.heaventy.flashorama",
-            "runtime": "org.freedesktop.Platform",
-            "runtimeVersion": "22.08",
-            "sdk": "org.freedesktop.Sdk",
-            "arch": "x86_64",
-            "branch": "stable",
-            "finishArgs": [
-              "--share=network",
-              "--socket=x11",
-              "--socket=pulseaudio",
-              "--filesystem=home"
-            ],
-            "modules": [
-              {
-                "name": "app",
-                "buildsystem": "simple",
-                "build-commands": [
-                  "npm install --production"
-                ],
-                "sources": [
-                  {
-                    "type": "dir",
-                    "path": "."
-                  }
-                ]
-              }
-            ]
-          }
         }
       ],
       "publishers": [
