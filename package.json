@@ -52,21 +52,7 @@
             "background": "./lib/icons/macos_bg.png",
             "icon": "./lib/icons/icon.icns",
             "overwrite": true,
-            "iconSize": 128,
-            "contents": [
-              {
-                "x": 180,
-                "y": 300,
-                "type": "file",
-                "path": "HeaventyFlashorama.app"
-              },
-              {
-                "x": 480,
-                "y": 300,
-                "type": "link",
-                "path": "/Applications"
-              }
-            ]
+            "iconSize": 128
           }
         },
         {
