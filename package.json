@@ -52,7 +52,27 @@
             "background": "./lib/icons/macos_bg.png",
             "icon": "./lib/icons/icon.icns",
             "overwrite": true,
-            "iconSize": 128
+            "iconSize": 128,
+            "window": {
+              "size": {
+                "width": 1000,
+                "height": 600
+              }
+            },
+            "contents": [
+              {
+                "x": 180,
+                "y": 300,
+                "type": "file",
+                "path": "Flashorama.app"
+              },
+              {
+                "x": 480,
+                "y": 300,
+                "type": "link",
+                "path": "/Applications"
+              }
+            ]
           }
         },
         {
