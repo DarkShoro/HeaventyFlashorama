@@ -44,30 +44,36 @@ try {
     console.error("Failed to update the Electron app:", error);
 }
 
-const ALLOWED_ORIGINS = [
-    "https://heaventy-projects.fr",
-    "https://lightshoro.fr",
-    "https://misternox.net",
-    "https://flashorama.heaventy-projects.fr",
-    "https://clubpenguin.heaventy-projects.fr",
-    "https://cpas2media.heaventy-projects.fr",
-    "https://newclubpenguin.heaventy-projects.fr",
-    "https://cpas3media.heaventy-projects.fr",
-    "https://oldbbo.heaventy-projects.fr",
-    "https://midbbo.heaventy-projects.fr",
-    "https://heabbo.heaventy-projects.fr",
-
-    // Intranet domains for development & testing
-    "http://heaventy-projects.intra",
-    "http://flashorama.intra",
-    "http://clubpenguin.flashorama.intra",
-    "http://cpmedia00.flashorama.intra",
-    "http://newclubpenguin.flashorama.intra",
-    "http://cpmedia01.flashorama.intra",
-    "http://oldbbo.flashorama.intra",
-    "http://midbbo.flashorama.intra",
-    "http://heabbo.flashorama.intra",
+const DOMAINS = [
+    "heaventy-projects.fr",
+    "lightshoro.fr",
+    "misternox.net",
+    "flashorama.heaventy-projects.fr",
+    "clubpenguin.heaventy-projects.fr",
+    "cpas2media.heaventy-projects.fr",
+    "newclubpenguin.heaventy-projects.fr",
+    "cpas3media.heaventy-projects.fr",
+    "oldbbo.heaventy-projects.fr",
+    "midbbo.heaventy-projects.fr",
+    "heabbo.heaventy-projects.fr",
+    "heaventy-projects.intra",
+    "flashorama.intra",
+    "clubpenguin.flashorama.intra",
+    "cpmedia00.flashorama.intra",
+    "newclubpenguin.flashorama.intra",
+    "cpmedia01.flashorama.intra",
+    "oldbbo.flashorama.intra",
+    "midbbo.flashorama.intra",
+    "heabbo.flashorama.intra",
 ];
+
+// Silently rewrite HTTP to HTTPS
+const normalizeUrl = (urlString) => {
+    if (urlString.startsWith('http://')) {
+        return urlString.replace('http://', 'https://');
+    }
+    return urlString;
+};
 
 const pluginPaths = {
     win32: path.join(path.dirname(__dirname), "lib/pepflashplayer.dll"),
@@ -153,6 +159,18 @@ const createWindow = (isIntranet = false) => {
 
     ses = session.fromPartition("persist:main"); // Ensure the session is initialized here
 
+    // Intercept all HTTP requests and rewrite to HTTPS (except in intranet mode)
+    ses.webRequest.onBeforeRequest({ urls: ['http://*/*'] }, (details, callback) => {
+        if (!isIntranet) {
+            // Rewrite HTTP to HTTPS
+            const httpsUrl = details.url.replace('http://', 'https://');
+            callback({ redirectURL: httpsUrl });
+        } else {
+            // In intranet mode, allow HTTP requests
+            callback({});
+        }
+    });
+
     mainWindow = new BrowserWindow({
         autoHideMenuBar: true,
         useContentSize: true,
@@ -185,7 +203,7 @@ const createWindow = (isIntranet = false) => {
 
     if (process.argv[1] && process.argv[1].startsWith('flashorama-intra://')) {
         nextUrl = process.argv[1];
-        nextUrl = nextUrl.replace("flashorama-intra://", "http://");
+        nextUrl = nextUrl.replace("flashorama-intra://", "https://");
     }
 
     // Check if we're loading an intranet URL and update splash accordingly
@@ -239,7 +257,10 @@ const createWindow = (isIntranet = false) => {
     });
 
     mainWindow.webContents.on("will-navigate", (event, urlString) => {
-        if (!ALLOWED_ORIGINS.includes(new URL(urlString).origin)) {
+        const normalizedUrl = normalizeUrl(urlString);
+        const hostname = new URL(normalizedUrl).hostname;
+        
+        if (!DOMAINS.includes(hostname)) {
             event.preventDefault();
 
             if (
@@ -261,19 +282,19 @@ const createWindow = (isIntranet = false) => {
 
         // if the site is flashorama, add the ?old=true parameter to the url
 
-        if (new URL(urlString).hostname === "flashorama.heaventy-projects.fr") {
+        if (new URL(normalizedUrl).hostname === "flashorama.heaventy-projects.fr") {
             if (urlString.includes("old=true")) return;
             event.preventDefault();
             mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
         }
 
-        if (new URL(urlString).hostname === "flashorama.intra") {
+        if (new URL(normalizedUrl).hostname === "flashorama.intra") {
             if (urlString.includes("old=true")) return;
             event.preventDefault();
-            mainWindow.loadURL("http://flashorama.intra?old=true&launcher=" + launcherVersion);
+            mainWindow.loadURL("https://flashorama.intra?old=true&launcher=" + launcherVersion);
         }
 
-        let domain = new URL(urlString).hostname;
+        let domain = new URL(normalizedUrl).hostname;
 
         switch (domain) {
             case "heaventy-projects.fr":
@@ -289,28 +310,33 @@ const createWindow = (isIntranet = false) => {
                 discord_integration.updatePresence("Sur le site MisterNox", "Heaventy Projects", "win");
                 break;
             case "newclubpenguin.heaventy-projects.fr":
+            case "newclubpenguin.flashorama.intra":
                 discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS3) - Heaventy Projects", "cpnewiconnotm");
                 break;
             case "clubpenguin.heaventy-projects.fr":
+            case "clubpenguin.flashorama.intra":
                 discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS2) - Heaventy Projects", "cpoldicon");
                 break;
             case "heabbo.heaventy-projects.fr":
+            case "heabbo.flashorama.intra":
                 discord_integration.updatePresence("Sur le site Heabbo", "Heabbo - Heaventy Projects", "heabboicon");
                 break;
             case "midbbo.heaventy-projects.fr":
+            case "midbbo.flashorama.intra":
                 discord_integration.updatePresence("Sur le site Midbbo", "Flashorama - Heaventy Projects", "midbboicon");
                 break;
             case "oldbbo.heaventy-projects.fr":
+            case "oldbbo.flashorama.intra":
                 discord_integration.updatePresence("Sur le site Oldbbo", "Flashorama - Heaventy Projects", "oldbboicon");
                 break;
             case "flashorama.heaventy-projects.fr":
-                discord_integration.updatePresence("Sur le lanceur Flashorama", "Flashorama - Heaventy Projects", "flashoramaicon");
-                break;
             case "flashorama.intra":
                 discord_integration.updatePresence("Sur le lanceur Flashorama", "Flashorama - Heaventy Projects", "flashoramaicon");
                 break;
             case "cpas3media.heaventy-projects.fr":
+            case "cpmedia01.flashorama.intra":
             case "cpas2media.heaventy-projects.fr":
+            case "cpmedia00.flashorama.intra":
             default:
                 discord_integration.updatePresence("En dehors du site", "Hors du site - Heaventy Projects", "win");
                 break;
@@ -330,7 +356,7 @@ const createWindow = (isIntranet = false) => {
     if (nextUrl === null) {
         // Check both internet and intranet availability in parallel
         const internetUrl = "https://flashorama.heaventy-projects.fr";
-        const intranetUrl = "http://flashorama.intra";
+        const intranetUrl = "https://flashorama.intra";
         
         Promise.all([
             checkWebsiteConnection(internetUrl, 5000).then(() => true).catch(() => false),
@@ -385,7 +411,7 @@ const createWindow = (isIntranet = false) => {
 
             // Set the URL based on choice
             if (chosenIsIntranet) {
-                nextUrl = "http://flashorama.intra?old=true&launcher=" + launcherVersion;
+                nextUrl = "https://flashorama.intra?old=true&launcher=" + launcherVersion;
             } else {
                 nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion;
             }
@@ -466,19 +492,19 @@ const launchMain = () => {
             nextUrlMain = "https://oldbbo.heaventy-projects.fr";
             break;
         case "cpas3-intra":
-            nextUrlMain = "http://newclubpenguin.flashorama.intra";
+            nextUrlMain = "https://newclubpenguin.flashorama.intra";
             break;
         case "cpas2-intra":
-            nextUrlMain = "http://clubpenguin.flashorama.intra";
+            nextUrlMain = "https://clubpenguin.flashorama.intra";
             break;
         case "heabbo-intra":
-            nextUrlMain = "http://heabbo.flashorama.intra";
+            nextUrlMain = "https://heabbo.flashorama.intra";
             break;
         case "midbbo-intra":
-            nextUrlMain = "http://midbbo.flashorama.intra";
+            nextUrlMain = "https://midbbo.flashorama.intra";
             break;
         case "oldbbo-intra":
-            nextUrlMain = "http://oldbbo.flashorama.intra";
+            nextUrlMain = "https://oldbbo.flashorama.intra";
             break;
     }
 
