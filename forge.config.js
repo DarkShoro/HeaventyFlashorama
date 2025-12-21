@@ -1,3 +1,7 @@
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
+
 module.exports = {
   packagerConfig: {
     icon: "lib/icons/icon"
