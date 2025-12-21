@@ -48,14 +48,24 @@
         {
           "name": "@electron-forge/maker-dmg",
           "config": {
-            "format": "ULFO",
+            "format": "UDZO",
             "background": "./lib/icons/macos_bg.png",
             "icon": "./lib/icons/icon.icns",
             "overwrite": true,
-            "window": {
-              "width": 1000,
-              "height": 600
-            }
+            "iconSize": 128,
+            "contents": [
+              {
+                "x": 180,
+                "y": 170,
+                "type": "file"
+              },
+              {
+                "x": 480,
+                "y": 170,
+                "type": "link",
+                "path": "/Applications"
+              }
+            ]
           }
         },
         {
