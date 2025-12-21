@@ -51,7 +51,11 @@
             "format": "ULFO",
             "background": "./lib/icons/macos_bg.png",
             "icon": "./lib/icons/icon.icns",
-            "overwrite": true
+            "overwrite": true,
+            "window": {
+              "width": 1000,
+              "height": 600
+            }
           }
         },
         {
