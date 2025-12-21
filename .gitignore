@@ -1,4 +1,7 @@
 out
+# Generated files
+src/index.html
+
 # Logs
 logs
 *.log
@@ -107,3 +110,4 @@ dist
 .tern-port
 .DS_Store
 .DS_Store
+/.vs

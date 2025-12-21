@@ -5,7 +5,11 @@
             "type": "node",
             "request": "launch",
             "name": "Flashorama",
-            "runtimeExecutable": "electron-forge-vscode-win.cmd",
+            "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron-forge",
+            "windows": {
+                "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron-forge.cmd"
+            },
+            "args": ["start"],
             "cwd": "${workspaceRoot}"
         }
     ]

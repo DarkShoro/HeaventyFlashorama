@@ -9,6 +9,8 @@ const discord_integration = require('./integrations/discord');
 const path = require("path");
 const fetch = require('node-fetch');
 const yargs = require('yargs');
+const ejs = require('ejs');
+const fs = require('fs');
 
 const AbortController = require('abort-controller');
 
@@ -16,11 +18,17 @@ const options = yargs
     .usage("Usage: -game <name>")
     .option("game", {
         alias: "game",
-        describe: "Game string (cpas3, cpas2, heabbo)",
+        describe: "Game string (cpas3, cpas2, heabbo, midbbo, oldbbo, cpas3-intra, cpas2-intra, heabbo-intra, midbbo-intra, oldbbo-intra)",
         type: "string",
         demandOption: false
     })
     .argv;
+
+const os = require("os");
+const localIPs = Object.values(os.networkInterfaces())
+    .flat()
+    .filter(i => i.family === "IPv4" && !i.internal)
+    .map(i => i.address);
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) app.quit();
@@ -36,18 +44,36 @@ try {
     console.error("Failed to update the Electron app:", error);
 }
 
-const ALLOWED_ORIGINS = [
-    "https://newclubpenguin.heaventy-projects.fr",
-    "https://heaventy-projects.fr",
-    "https://cpas3media.heaventy-projects.fr",
-    "https://cpas2media.heaventy-projects.fr",
-    "https://clubpenguin.heaventy-projects.fr",
-    "https://heabbo.heaventy-projects.fr",
-    "https://flashorama.heaventy-projects.fr",
-    "https://midbbo.heaventy-projects.fr",
-    "https://lightshoro.fr",
-    "https://misternox.net",
+const DOMAINS = [
+    "heaventy-projects.fr",
+    "lightshoro.fr",
+    "misternox.net",
+    "flashorama.heaventy-projects.fr",
+    "clubpenguin.heaventy-projects.fr",
+    "cpas2media.heaventy-projects.fr",
+    "newclubpenguin.heaventy-projects.fr",
+    "cpas3media.heaventy-projects.fr",
+    "oldbbo.heaventy-projects.fr",
+    "midbbo.heaventy-projects.fr",
+    "heabbo.heaventy-projects.fr",
+    "heaventy-projects.intra",
+    "flashorama.intra",
+    "clubpenguin.flashorama.intra",
+    "cpmedia00.flashorama.intra",
+    "newclubpenguin.flashorama.intra",
+    "cpmedia01.flashorama.intra",
+    "oldbbo.flashorama.intra",
+    "midbbo.flashorama.intra",
+    "heabbo.flashorama.intra",
 ];
+
+// Silently rewrite HTTP to HTTPS
+const normalizeUrl = (urlString) => {
+    if (urlString.startsWith('http://')) {
+        return urlString.replace('http://', 'https://');
+    }
+    return urlString;
+};
 
 const pluginPaths = {
     win32: path.join(path.dirname(__dirname), "lib/pepflashplayer.dll"),
@@ -97,9 +123,18 @@ const checkWebsiteConnection = (url, timeout = 5000) => {
     });
 };
 
-const createWindow = () => {
-    // Create the browser window.
-    let splashWindow = new BrowserWindow({
+const createSplashWindow = (isIntranet = false) => {
+    const templatePath = path.join(__dirname, 'index.ejs');
+    const htmlPath = path.join(__dirname, 'index.html');
+    
+    // Render splash with correct logo
+    const logoFile = isIntranet ? 'flashorama_intra_logo.png' : 'flashorama_full_logo.png';
+    const template = fs.readFileSync(templatePath, 'utf-8');
+    const html = ejs.render(template, { logoFile });
+    fs.writeFileSync(htmlPath, html);
+
+    // Create the splash window
+    const splashWindow = new BrowserWindow({
         width: 600,
         height: 320,
         frame: false,
@@ -110,16 +145,31 @@ const createWindow = () => {
     });
 
     splashWindow.setResizable(false);
-    splashWindow.loadURL(
-        "file://" + path.join(path.dirname(__dirname), "src/index.html"),
-    );
-    splashWindow.on("closed", () => (splashWindow = null));
+    splashWindow.loadURL("file://" + htmlPath);
     splashWindow.webContents.on("did-finish-load", () => {
         splashWindow.show();
         splashWindow.focus();
     });
 
+    return splashWindow;
+};
+
+const createWindow = (isIntranet = false) => {
+    let splashWindow = createSplashWindow(false); // Start with generic logo
+
     ses = session.fromPartition("persist:main"); // Ensure the session is initialized here
+
+    // Intercept all HTTP requests and rewrite to HTTPS (except in intranet mode)
+    ses.webRequest.onBeforeRequest({ urls: ['http://*/*'] }, (details, callback) => {
+        if (!isIntranet) {
+            // Rewrite HTTP to HTTPS
+            const httpsUrl = details.url.replace('http://', 'https://');
+            callback({ redirectURL: httpsUrl });
+        } else {
+            // In intranet mode, allow HTTP requests
+            callback({});
+        }
+    });
 
     mainWindow = new BrowserWindow({
         autoHideMenuBar: true,
@@ -151,12 +201,50 @@ const createWindow = () => {
         nextUrl = nextUrl.replace("flashorama://", "https://");
     }
 
+    if (process.argv[1] && process.argv[1].startsWith('flashorama-intra://')) {
+        nextUrl = process.argv[1];
+        nextUrl = nextUrl.replace("flashorama-intra://", "https://");
+    }
+
+    // Check if we're loading an intranet URL and update splash accordingly
+    const isIntranetUrl = (url) => url && (url.includes('flashorama.intra') || url.includes('.intra'));
+
+    let pageLoadTimeout = null;
+    let hasShownMainWindow = false;
+    let splashStartTime = Date.now();
+    const minSplashDisplayTime = 1500; // Minimum 1.5 seconds
+
     mainWindow.webContents.on("did-finish-load", () => {
-        if (splashWindow) {
-            splashWindow.close();
-            mainWindow.show();
+        if (pageLoadTimeout) clearTimeout(pageLoadTimeout);
+        if (!hasShownMainWindow) {
+            hasShownMainWindow = true;
+            
+            // Calculate remaining time to show splash
+            const elapsedTime = Date.now() - splashStartTime;
+            const remainingTime = Math.max(0, minSplashDisplayTime - elapsedTime);
+            
+            setTimeout(() => {
+                if (splashWindow && !splashWindow.isDestroyed()) {
+                    splashWindow.close();
+                }
+                mainWindow.show();
+                console.log("Main window loaded successfully");
+            }, remainingTime);
         }
         discord_integration.initDiscordRichPresence();
+    });
+
+    mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
+        console.error("Failed to load:", errorCode, errorDescription);
+        if (pageLoadTimeout) clearTimeout(pageLoadTimeout);
+        if (!hasShownMainWindow) {
+            hasShownMainWindow = true;
+            if (splashWindow && !splashWindow.isDestroyed()) {
+                splashWindow.close();
+            }
+            dialog.showErrorBox("Erreur de chargement", "Impossible de charger la page: " + errorDescription);
+            app.quit();
+        }
     });
 
     mainWindow.webContents.on('page-title-updated', (event) => {
@@ -169,46 +257,86 @@ const createWindow = () => {
     });
 
     mainWindow.webContents.on("will-navigate", (event, urlString) => {
-        if (!ALLOWED_ORIGINS.includes(new URL(urlString).origin)) {
+        const normalizedUrl = normalizeUrl(urlString);
+        const hostname = new URL(normalizedUrl).hostname;
+        
+        if (!DOMAINS.includes(hostname)) {
             event.preventDefault();
-            if (urlString.includes("oldbbo.heaventy-projects.fr")) {
-                // make an error box to tell the user that the oldbbo is not supported
-                dialog.showErrorBox("Non supporté", "Oldbbo n'est pas supporté par l'application, veuillez utiliser un navigateur supportant Shockwave Flash.");
+
+            if (
+                urlString.includes("oldbbo.heaventy-projects.fr") ||
+                urlString.includes("oldbbo.heaventy-projects.intra")
+            ) {
+                dialog.showErrorBox(
+                    "Non supporté",
+                    "Oldbbo n'est pas supporté par l'application, veuillez utiliser un navigateur supportant Shockwave Flash."
+                );
                 return;
             }
-            dialog.showErrorBox("Non autorisé", "Vous ne pouvez pas naviguer vers cette page car elle réside en dehors du domaine autorisé.\n\n Lien bloqué: " + urlString);
+
+            dialog.showErrorBox(
+                "Non autorisé",
+                "Vous ne pouvez pas naviguer vers cette page car elle réside en dehors du domaine autorisé.\n\nLien bloqué: " + urlString
+            );
         }
 
         // if the site is flashorama, add the ?old=true parameter to the url
 
-        if (new URL(urlString).hostname === "flashorama.heaventy-projects.fr") {
+        if (new URL(normalizedUrl).hostname === "flashorama.heaventy-projects.fr") {
             if (urlString.includes("old=true")) return;
             event.preventDefault();
             mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
         }
 
-        let domain = new URL(urlString).hostname;
+        if (new URL(normalizedUrl).hostname === "flashorama.intra") {
+            if (urlString.includes("old=true")) return;
+            event.preventDefault();
+            mainWindow.loadURL("https://flashorama.intra?old=true&launcher=" + launcherVersion);
+        }
+
+        let domain = new URL(normalizedUrl).hostname;
 
         switch (domain) {
-            case "newclubpenguin.heaventy-projects.fr":
-                discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS3) - Heaventy Projects", "cpnewiconnotm");
-                break;
-            case "clubpenguin.heaventy-projects.fr":
-                discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS2) - Heaventy Projects", "cpoldicon");
-                break;
             case "heaventy-projects.fr":
                 discord_integration.updatePresence("Sur le site Heaventy Projects", "Heaventy Projects", "win");
                 break;
+            case "heaventy-projects.intra":
+                discord_integration.updatePresence("Sur le site Heaventy Projects", "Heaventy Projects", "win");
+                break;
+            case "lightshoro.fr":
+                discord_integration.updatePresence("Sur le site LightShoro", "Heaventy Projects", "win");
+                break;
+            case "misternox.net":
+                discord_integration.updatePresence("Sur le site MisterNox", "Heaventy Projects", "win");
+                break;
+            case "newclubpenguin.heaventy-projects.fr":
+            case "newclubpenguin.flashorama.intra":
+                discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS3) - Heaventy Projects", "cpnewiconnotm");
+                break;
+            case "clubpenguin.heaventy-projects.fr":
+            case "clubpenguin.flashorama.intra":
+                discord_integration.updatePresence("Sur le serveur Club Penguin", "Club Penguin (AS2) - Heaventy Projects", "cpoldicon");
+                break;
             case "heabbo.heaventy-projects.fr":
+            case "heabbo.flashorama.intra":
                 discord_integration.updatePresence("Sur le site Heabbo", "Heabbo - Heaventy Projects", "heabboicon");
                 break;
+            case "midbbo.heaventy-projects.fr":
+            case "midbbo.flashorama.intra":
+                discord_integration.updatePresence("Sur le site Midbbo", "Flashorama - Heaventy Projects", "midbboicon");
+                break;
+            case "oldbbo.heaventy-projects.fr":
+            case "oldbbo.flashorama.intra":
+                discord_integration.updatePresence("Sur le site Oldbbo", "Flashorama - Heaventy Projects", "oldbboicon");
+                break;
             case "flashorama.heaventy-projects.fr":
+            case "flashorama.intra":
                 discord_integration.updatePresence("Sur le lanceur Flashorama", "Flashorama - Heaventy Projects", "flashoramaicon");
                 break;
             case "cpas3media.heaventy-projects.fr":
+            case "cpmedia01.flashorama.intra":
             case "cpas2media.heaventy-projects.fr":
-            case "oldbbo.heaventy-projects.fr":
-                break;
+            case "cpmedia00.flashorama.intra":
             default:
                 discord_integration.updatePresence("En dehors du site", "Hors du site - Heaventy Projects", "win");
                 break;
@@ -226,28 +354,96 @@ const createWindow = () => {
     mainWindow.on("closed", () => (mainWindow = null));
 
     if (nextUrl === null) {
-        nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion
+        // Check both internet and intranet availability in parallel
+        const internetUrl = "https://flashorama.heaventy-projects.fr";
+        const intranetUrl = "https://flashorama.intra";
+        
+        Promise.all([
+            checkWebsiteConnection(internetUrl, 5000).then(() => true).catch(() => false),
+            checkWebsiteConnection(intranetUrl, 8000).then(() => true).catch(() => false)
+        ]).then(([internetAvailable, intranetAvailable]) => {
+            // If neither is available, show error and quit
+            if (!internetAvailable && !intranetAvailable) {
+                if (splashWindow && !splashWindow.isDestroyed()) {
+                    splashWindow.close();
+                }
+                dialog.showErrorBox("Erreur de connexion", "Impossible de se connecter aux serveurs Internet et Intranet. Veuillez vérifier votre connexion.");
+                app.quit();
+                return;
+            }
+
+            let chosenIsIntranet = false;
+
+            // If both are available, ask user
+            if (internetAvailable && intranetAvailable) {
+                // Close splash before showing dialog
+                if (splashWindow && !splashWindow.isDestroyed()) {
+                    splashWindow.close();
+                }
+
+                const choice = dialog.showMessageBoxSync(mainWindow, {
+                    type: 'question',
+                    buttons: ['Internet', 'Intranet'],
+                    defaultId: 1,
+                    title: 'Sélection de la version',
+                    message: 'L\'intranet est disponible',
+                    detail: 'Quelle version souhaitez-vous utiliser ?'
+                });
+
+                chosenIsIntranet = (choice === 1);
+
+                // Recreate splash with chosen logo
+                splashWindow = createSplashWindow(chosenIsIntranet);
+                splashStartTime = Date.now();
+            } else if (intranetAvailable) {
+                // Only intranet available, use it as fallback
+                chosenIsIntranet = true;
+                // Close and recreate splash with intranet logo
+                if (splashWindow && !splashWindow.isDestroyed()) {
+                    splashWindow.close();
+                }
+                splashWindow = createSplashWindow(true);
+                splashStartTime = Date.now();
+            } else {
+                // Only internet available, use it
+                chosenIsIntranet = false;
+            }
+
+            // Set the URL based on choice
+            if (chosenIsIntranet) {
+                nextUrl = "https://flashorama.intra?old=true&launcher=" + launcherVersion;
+            } else {
+                nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion;
+            }
+
+            loadMainWindow(nextUrl);
+        });
+        return; // Exit early to wait for connection checks
     }
 
-    checkWebsiteConnection(nextUrl, 5000)
-        .then(() => {
-            new Promise((resolve) => {
+    // If nextUrl is already set (from command line args or game option), load directly
+    loadMainWindow(nextUrl);
 
-                if (nextUrl) {
-                    mainWindow.loadURL(nextUrl);
-                    mainWindow.setSize(1280, 720);
-                    resolve();
-                    return;
+    function loadMainWindow(url) {
+        // Start loading immediately and show window after a timeout regardless
+        mainWindow.loadURL(url);
+        mainWindow.setSize(1600, 900);
+        // Center the window on screen
+        mainWindow.center();
+        
+        // Force show window after timeout (longer for intranet)
+        const pageLoadTimeoutDuration = url.includes('flashorama.intra') ? 10000 : 8000;
+        
+        pageLoadTimeout = setTimeout(() => {
+            if (!hasShownMainWindow) {
+                hasShownMainWindow = true;
+                if (splashWindow && !splashWindow.isDestroyed()) {
+                    splashWindow.close();
                 }
-                mainWindow.loadURL("https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion);
-                // set main window size
-                mainWindow.setSize(1280, 720);
-                resolve();
-            });
-        }).catch(() => {
-            dialog.showErrorBox("Erreur de connexion", "Impossible de se connecter au site, veuillez vérifier votre connexion internet.");
-            app.quit();
-        });
+                mainWindow.show();
+            }
+        }, Math.max(pageLoadTimeoutDuration, minSplashDisplayTime));
+    }
 };
 
 const launchMain = () => {
@@ -289,16 +485,39 @@ const launchMain = () => {
         case "heabbo":
             nextUrlMain = "https://heabbo.heaventy-projects.fr";
             break;
+        case "midbbo":
+            nextUrlMain = "https://midbbo.heaventy-projects.fr";
+            break;
+        case "oldbbo":
+            nextUrlMain = "https://oldbbo.heaventy-projects.fr";
+            break;
+        case "cpas3-intra":
+            nextUrlMain = "https://newclubpenguin.flashorama.intra";
+            break;
+        case "cpas2-intra":
+            nextUrlMain = "https://clubpenguin.flashorama.intra";
+            break;
+        case "heabbo-intra":
+            nextUrlMain = "https://heabbo.flashorama.intra";
+            break;
+        case "midbbo-intra":
+            nextUrlMain = "https://midbbo.flashorama.intra";
+            break;
+        case "oldbbo-intra":
+            nextUrlMain = "https://oldbbo.flashorama.intra";
+            break;
     }
 
     app.whenReady().then(() => {
-        createWindow();
+        // Determine if we should use intranet mode based on command-line args
+        const isIntranetMode = nextUrlMain && nextUrlMain.includes('.intra');
+        createWindow(isIntranetMode);
 
         app.on("activate", () => {
             // On OS X it's common to re-create a window in the app when the
             // dock icon is clicked and there are no other windows open.
             if (BrowserWindow.getAllWindows().length === 0) {
-                createWindow();
+                createWindow(isIntranetMode);
             }
         });
     })
