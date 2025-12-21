@@ -64,7 +64,14 @@
                 },
                 {
                     "name": "@electron-forge/maker-flatpak",
-                    "config": {}
+                    "config": {
+                        "id": "fr.lightshoro.heaventy.flashorama",
+                        "runtime": "org.freedesktop.Platform",
+                        "runtimeVersion": "22.08",
+                        "sdk": "org.freedesktop.Sdk",
+                        "arch": "x86_64",
+                        "branch": "stable"
+                    }
                 }
             ],
             "publishers": [
