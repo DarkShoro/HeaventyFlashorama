@@ -159,14 +159,17 @@ const createWindow = (isIntranet = false) => {
 
     ses = session.fromPartition("persist:main"); // Ensure the session is initialized here
 
-    // Intercept all HTTP requests and rewrite to HTTPS (except in intranet mode)
+    // Intercept all HTTP requests and rewrite to HTTPS (except for intranet domains)
     ses.webRequest.onBeforeRequest({ urls: ['http://*/*'] }, (details, callback) => {
-        if (!isIntranet) {
-            // Rewrite HTTP to HTTPS
+        // Check if the URL is an intranet domain
+        const isIntranetUrl = details.url.includes('.intra');
+        
+        if (!isIntranetUrl) {
+            // Rewrite HTTP to HTTPS for non-intranet URLs
             const httpsUrl = details.url.replace('http://', 'https://');
             callback({ redirectURL: httpsUrl });
         } else {
-            // In intranet mode, allow HTTP requests
+            // Allow HTTP requests for intranet domains
             callback({});
         }
     });
@@ -203,7 +206,7 @@ const createWindow = (isIntranet = false) => {
 
     if (process.argv[1] && process.argv[1].startsWith('flashorama-intra://')) {
         nextUrl = process.argv[1];
-        nextUrl = nextUrl.replace("flashorama-intra://", "https://");
+        nextUrl = nextUrl.replace("flashorama-intra://", "http://");
     }
 
     // Check if we're loading an intranet URL and update splash accordingly
@@ -291,7 +294,7 @@ const createWindow = (isIntranet = false) => {
         if (new URL(normalizedUrl).hostname === "flashorama.intra") {
             if (urlString.includes("old=true")) return;
             event.preventDefault();
-            mainWindow.loadURL("https://flashorama.intra?old=true&launcher=" + launcherVersion);
+            mainWindow.loadURL("http://flashorama.intra?old=true&launcher=" + launcherVersion);
         }
 
         let domain = new URL(normalizedUrl).hostname;
@@ -356,7 +359,7 @@ const createWindow = (isIntranet = false) => {
     if (nextUrl === null) {
         // Check both internet and intranet availability in parallel
         const internetUrl = "https://flashorama.heaventy-projects.fr";
-        const intranetUrl = "https://flashorama.intra";
+        const intranetUrl = "http://flashorama.intra";
         
         Promise.all([
             checkWebsiteConnection(internetUrl, 5000).then(() => true).catch(() => false),
@@ -411,7 +414,7 @@ const createWindow = (isIntranet = false) => {
 
             // Set the URL based on choice
             if (chosenIsIntranet) {
-                nextUrl = "https://flashorama.intra?old=true&launcher=" + launcherVersion;
+                nextUrl = "http://flashorama.intra?old=true&launcher=" + launcherVersion;
             } else {
                 nextUrl = "https://flashorama.heaventy-projects.fr?old=true&launcher=" + launcherVersion;
             }
@@ -492,19 +495,19 @@ const launchMain = () => {
             nextUrlMain = "https://oldbbo.heaventy-projects.fr";
             break;
         case "cpas3-intra":
-            nextUrlMain = "https://newclubpenguin.flashorama.intra";
+            nextUrlMain = "http://newclubpenguin.flashorama.intra";
             break;
         case "cpas2-intra":
-            nextUrlMain = "https://clubpenguin.flashorama.intra";
+            nextUrlMain = "http://clubpenguin.flashorama.intra";
             break;
         case "heabbo-intra":
-            nextUrlMain = "https://heabbo.flashorama.intra";
+            nextUrlMain = "http://heabbo.flashorama.intra";
             break;
         case "midbbo-intra":
-            nextUrlMain = "https://midbbo.flashorama.intra";
+            nextUrlMain = "http://midbbo.flashorama.intra";
             break;
         case "oldbbo-intra":
-            nextUrlMain = "https://oldbbo.flashorama.intra";
+            nextUrlMain = "http://oldbbo.flashorama.intra";
             break;
     }
 
