@@ -56,12 +56,13 @@
             "contents": [
               {
                 "x": 180,
-                "y": 170,
-                "type": "file"
+                "y": 300,
+                "type": "file",
+                "path": "HeaventyFlashorama.app"
               },
               {
                 "x": 480,
-                "y": 170,
+                "y": 300,
                 "type": "link",
                 "path": "/Applications"
               }
